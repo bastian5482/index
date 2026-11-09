@@ -7,6 +7,7 @@
   <meta name="description" content="Money Back – ein modernes, responsives Krypto-Demo-Frontend." />
   <title>Money Back — Einfacher Krypto-Demo-Prototyp</title>
   <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
@@ -711,7 +712,11 @@
     $('#usdButton').addEventListener('click', () => setCurrency('usd'));
 
 
-    // ───────────────── API integration (same-origin Express backend) ─────────────────
+    // ───────────────── Supabase integration ─────────────────
+    // Public publishable key is intended for browser use. Database access is protected by RLS.
+    const SUPABASE_URL = 'https://wtvesjqszwxmqwqjcxbu.supabase.co';
+    const SUPABASE_PUBLISHABLE_KEY = 'sb_publishable_e6UfAslHElaAD0O9-g6Ekg_rd4q4rlW';
+    const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY);
     const supportUi = {
       de: {title:'Money Back Support',subtitle:'Wir helfen Ihnen gerne',welcome:'Hallo! Wie können wir Ihnen helfen?',placeholder:'Ihre Nachricht…',send:'Senden',launcher:'Support',you:'Sie',bot:'Bot',staff:'Support',login:'Bitte melden Sie sich an, um den Support-Chat zu nutzen.',failed:'Nachricht konnte nicht gesendet werden. Bitte versuchen Sie es erneut.',loading:'Wird gesendet…',logout:'Abmelden',empty:'Noch keine Nachrichten. Schreiben Sie uns gerne.',tradeNote:'Demo — keine echte Transaktion',verified:'E-Mail bestätigt. Sie können sich jetzt anmelden.',verifyInvalid:'Der Bestätigungslink ist ungültig oder abgelaufen.',genericError:'Etwas ist schiefgelaufen. Bitte versuchen Sie es erneut.',emailSent:'Wir haben Ihnen eine Bestätigungs-E-Mail gesendet. Bitte prüfen Sie Ihren Posteingang.',emailFailed:'Konto erstellt, aber die E-Mail konnte nicht versendet werden. Bitte prüfen Sie die Resend-Konfiguration.'},
       en: {title:'Money Back Support',subtitle:'We are happy to help',welcome:'Hello! How can we help you?',placeholder:'Your message…',send:'Send',launcher:'Support',you:'You',bot:'Bot',staff:'Support',login:'Please sign in to use the support chat.',failed:'Message could not be sent. Please try again.',loading:'Sending…',logout:'Sign out',empty:'No messages yet. Feel free to write to us.',tradeNote:'Demo — no real transaction',verified:'Email confirmed. You can now sign in.',verifyInvalid:'This confirmation link is invalid or expired.',genericError:'Something went wrong. Please try again.',emailSent:'We sent a confirmation email. Please check your inbox.',emailFailed:'Account created, but the email could not be sent. Please check the Resend configuration.'},
@@ -727,20 +732,61 @@
     let lastRegisterEmailSent = null;
     let supportMessagesCache = [];
     const api = async (url, options={}) => {
-      const response = await fetch(url, {
-        credentials: 'same-origin',
-        cache: 'no-store',
-        ...options,
-        headers: { ...(options.body ? {'Content-Type':'application/json'} : {}), ...(options.headers || {}) }
-      });
-      const payload = await response.json().catch(() => ({}));
-      if (!response.ok) {
-        const err = new Error(payload.error || payload.message || 'REQUEST_FAILED');
-        err.status = response.status;
-        err.payload = payload;
-        throw err;
+      const method = String(options.method || 'GET').toUpperCase();
+      let body = {};
+      try { body = options.body ? JSON.parse(options.body) : {}; } catch {}
+      const fail = (error, status=400) => { const e = new Error(error || 'REQUEST_FAILED'); e.status=status; throw e; };
+      const currentUser = async () => {
+        const { data, error } = await supabaseClient.auth.getUser();
+        if (error || !data.user) fail('UNAUTHORIZED', 401);
+        return data.user;
+      };
+      if (url === '/api/auth/register' && method === 'POST') {
+        const { data, error } = await supabaseClient.auth.signUp({
+          email: body.email, password: body.password,
+          options: { data: { full_name: body.name }, emailRedirectTo: location.origin + location.pathname }
+        });
+        if (error) fail(error.message, error.status || 400);
+        return { user: data.user, emailSent: !data.session && Boolean(data.user), needsEmailVerification: !data.session };
       }
-      return payload;
+      if (url === '/api/auth/login' && method === 'POST') {
+        const { data, error } = await supabaseClient.auth.signInWithPassword({ email: body.email, password: body.password });
+        if (error) fail(error.message, error.status === 400 ? 401 : (error.status || 401));
+        const profile = await supabaseClient.from('profiles').select('full_name').eq('id', data.user.id).maybeSingle();
+        return { user: { id: data.user.id, name: profile.data?.full_name || data.user.user_metadata?.full_name || data.user.email }, needsEmailVerification: false };
+      }
+      if (url === '/api/auth/logout' && method === 'POST') {
+        const { error } = await supabaseClient.auth.signOut(); if (error) fail(error.message, 400); return { ok: true };
+      }
+      if (url === '/api/me') {
+        const user = await currentUser();
+        const { data, error } = await supabaseClient.from('profiles').select('full_name,email').eq('id', user.id).maybeSingle();
+        if (error) fail(error.message);
+        return { user: { id:user.id, name:data?.full_name || user.user_metadata?.full_name || user.email, email:data?.email || user.email } };
+      }
+      if (url === '/api/balances') {
+        const user = await currentUser();
+        const { data, error } = await supabaseClient.from('balances').select('asset,amount').eq('user_id', user.id).order('asset');
+        if (error) fail(error.message); return { balances: data || [] };
+      }
+      if (url === '/api/transactions') {
+        const user = await currentUser();
+        const { data, error } = await supabaseClient.from('transactions').select('id,type,asset,amount,price_eur,status,created_at').eq('user_id', user.id).order('created_at', {ascending:false}).limit(100);
+        if (error) fail(error.message); return { transactions: data || [] };
+      }
+      if (url === '/api/support/messages') {
+        const user = await currentUser();
+        const { data, error } = await supabaseClient.from('support_messages').select('id,message,from_support,from_bot,created_at').eq('user_id', user.id).order('created_at', {ascending:true}).limit(200);
+        if (error) fail(error.message); return { messages: data || [] };
+      }
+      if (url === '/api/support/message' && method === 'POST') {
+        const user = await currentUser();
+        const message = String(body.message || '').trim();
+        if (!message || message.length > 4000) fail('INVALID_MESSAGE');
+        const { error } = await supabaseClient.from('support_messages').insert({ user_id:user.id, message });
+        if (error) fail(error.message); return { ok:true };
+      }
+      fail('ENDPOINT_NOT_FOUND', 404);
     };
     const safeText = (value) => String(value ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
     function supportLang() { return supportUi[lang] || supportUi.de; }
