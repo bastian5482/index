@@ -1,0 +1,1036 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#F7F8FA" />
+  <meta name="description" content="Money Back – ein modernes, responsives Krypto-Demo-Frontend." />
+  <title>Money Back — Einfacher Krypto-Demo-Prototyp</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <style>
+    :root { color-scheme: light; }
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body { margin: 0; background: #F7F8FA; color: #1A1D26; font-family: Inter, ui-sans-serif, system-ui, sans-serif; }
+    button, input, select, textarea { font: inherit; }
+    button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible { outline: 3px solid rgba(27,107,255,.25); outline-offset: 2px; }
+    .hidden-page { display: none !important; }
+    .page-enter { animation: pageIn .24s ease-out; }
+    @keyframes pageIn { from { opacity: .55; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+    .coin-symbol { display: inline-flex; align-items: center; justify-content: center; width: 42px; height: 42px; border-radius: 999px; color: #fff; font-size: 11px; font-weight: 800; letter-spacing: -.02em; flex: 0 0 auto; }
+    .coin-symbol.small { width: 34px; height: 34px; font-size: 9px; }
+
+    .coin-logo-frame { position: relative; overflow: hidden; background: #fff !important; border: 1px solid #E8EDF3; color: #fff; }
+    .coin-logo-img { display: block; width: 100%; height: 100%; object-fit: contain; padding: 2px; }
+    .coin-logo-fallback { display: none; position: absolute; inset: 0; align-items: center; justify-content: center; border-radius: 999px; color: #fff; font-size: 9px; font-weight: 800; }
+    .nav-link { color: #687386; transition: color .18s ease; }
+    .nav-link:hover, .nav-link.active { color: #1B6BFF; }
+    .mobile-nav-open { display: flex !important; }
+    .modal-visible { display: flex !important; }
+    .tab-active { color: #1B6BFF; border-color: #1B6BFF; background: #EEF4FF; }
+    .currency-active { background: #1B6BFF; color: #fff; box-shadow: 0 3px 8px rgba(27,107,255,.2); }
+    .field { width: 100%; border: 1px solid #E5E9F0; border-radius: 12px; padding: 12px 14px; background: #fff; color: #1A1D26; transition: border-color .18s ease, box-shadow .18s ease; }
+    .field:focus { border-color: #1B6BFF; box-shadow: 0 0 0 3px rgba(27,107,255,.10); outline: none; }
+    .muted-line { border-color: #EDF0F4; }
+    .bg-brand { background-color: #1B6BFF; }
+    .text-brand { color: #1B6BFF; }
+    .bg-ink { background-color: #1A1D26; }
+    .text-ink { color: #1A1D26; }
+    .text-muted { color: #687386; }
+    .bg-canvas { background-color: #F7F8FA; }
+    .text-positive { color: #00B87C; }
+    .bg-positive { background-color: #00B87C; }
+    .text-negative { color: #E53E3E; }
+    .bg-negative { background-color: #E53E3E; }
+    .shadow-soft { box-shadow: 0 8px 30px rgba(26, 39, 68, 0.06); }
+    .status-dot { width: 7px; height: 7px; border-radius: 99px; background: #00B87C; display: inline-block; }
+    .ticker { font-variant-numeric: tabular-nums; }
+    @media (prefers-reduced-motion: reduce) { *, *::before, *::after { scroll-behavior: auto !important; animation-duration: .01ms !important; transition-duration: .01ms !important; } }
+  </style>
+</head>
+<body class="antialiased">
+  <div id="app" class="min-h-screen flex flex-col">
+    <!-- Header -->
+    <header class="sticky top-0 z-40 border-b border-slate-100 bg-white/95 backdrop-blur-md">
+      <div class="mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 py-3 sm:px-6 lg:px-8">
+        <button class="flex shrink-0 items-center gap-2.5 text-left" data-nav="home" aria-label="Money Back – Startseite" data-i18n-aria="homeAriaLabel">
+          <span class="flex h-10 w-10 items-center justify-center rounded-xl bg-brand text-lg font-extrabold text-white shadow-sm">M</span>
+          <span class="text-lg font-extrabold tracking-tight text-ink">Money Back</span>
+        </button>
+
+        <nav class="hidden items-center gap-7 text-sm font-semibold lg:flex" aria-label="Hauptnavigation">
+          <button class="nav-link" data-nav="home" data-nav-key="home">Startseite</button>
+          <button class="nav-link" data-nav="dashboard" data-nav-key="dashboard">Dashboard</button>
+          <button class="nav-link" data-nav="trade" data-nav-key="trade">Handel</button>
+          <button class="nav-link" data-nav="about" data-nav-key="about">Über uns</button>
+        </nav>
+
+        <div class="flex shrink-0 items-center gap-2 sm:gap-3">
+          <label class="sr-only" for="languageSelect" data-i18n="languageLabel">Sprache auswählen</label>
+          <select id="languageSelect" class="max-w-[112px] rounded-xl border border-slate-200 bg-white px-2.5 py-2 text-xs font-semibold text-ink sm:max-w-none sm:px-3 sm:text-sm" aria-label="Select language" data-i18n-aria="languageLabel">
+            <option value="de">Deutsch</option><option value="en">English</option><option value="es">Español</option><option value="fr">Français</option><option value="it">Italiano</option>
+          </select>
+          <button class="hidden rounded-xl px-3 py-2 text-sm font-semibold text-ink transition hover:bg-slate-50 sm:inline-flex" data-nav="login" data-i18n="login">Anmelden</button>
+          <button class="hidden rounded-xl bg-brand px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700 sm:inline-flex" data-nav="register" data-i18n="register">Registrieren</button>
+          <button id="mobileMenuButton" class="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-slate-200 text-ink lg:hidden" aria-label="Open navigation" data-i18n-aria="mobileMenuLabel" aria-expanded="false">
+            <svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16" /></svg>
+          </button>
+        </div>
+      </div>
+      <nav id="mobileNav" class="hidden border-t border-slate-100 bg-white px-4 py-4 lg:hidden" aria-label="Mobile navigation">
+        <div class="mx-auto flex max-w-7xl flex-col gap-1">
+          <button class="rounded-lg px-3 py-2.5 text-left text-sm font-semibold nav-link" data-nav="home" data-nav-key="home">Startseite</button>
+          <button class="rounded-lg px-3 py-2.5 text-left text-sm font-semibold nav-link" data-nav="dashboard" data-nav-key="dashboard">Dashboard</button>
+          <button class="rounded-lg px-3 py-2.5 text-left text-sm font-semibold nav-link" data-nav="trade" data-nav-key="trade">Handel</button>
+          <button class="rounded-lg px-3 py-2.5 text-left text-sm font-semibold nav-link" data-nav="about" data-nav-key="about">Über uns</button>
+          <div class="mt-2 grid grid-cols-2 gap-2 border-t border-slate-100 pt-3">
+            <button class="rounded-xl border border-slate-200 px-3 py-2.5 text-sm font-semibold" data-nav="login" data-i18n="login">Anmelden</button>
+            <button class="rounded-xl bg-brand px-3 py-2.5 text-sm font-semibold text-white" data-nav="register" data-i18n="register">Registrieren</button>
+          </div>
+        </div>
+      </nav>
+    </header>
+
+    <main class="flex-1">
+      <!-- HOME -->
+      <section id="page-home" class="page-section">
+        <div class="mx-auto max-w-7xl px-4 pb-12 pt-12 sm:px-6 sm:pt-16 lg:px-8 lg:pb-16 lg:pt-20">
+          <div class="grid items-center gap-10 lg:grid-cols-[1.08fr_.92fr] lg:gap-14">
+            <div>
+              <div class="mb-5 inline-flex items-center gap-2 rounded-full border border-blue-100 bg-blue-50 px-3.5 py-2 text-xs font-bold text-brand">
+                <span class="status-dot"></span><span data-i18n="heroBadge">Einfach. Übersichtlich. Digital.</span>
+              </div>
+              <h1 class="max-w-2xl text-4xl font-extrabold leading-[1.12] tracking-tight text-ink sm:text-5xl lg:text-[58px]" data-i18n="heroTitle">Ihr Geld. Sicher verwahrt.</h1>
+              <p class="mt-6 max-w-xl text-base leading-7 text-muted sm:text-lg sm:leading-8" data-i18n="heroSubtitle">Entdecken Sie Kryptowährungen auf einfache Weise. Behalten Sie Ihre Märkte im Blick – klar, transparent und ohne komplizierte Werkzeuge.</p>
+              <div class="mt-8 flex flex-col gap-3 sm:flex-row">
+                <button class="rounded-xl bg-brand px-6 py-3.5 text-sm font-bold text-white shadow-[0_8px_20px_rgba(27,107,255,.2)] transition hover:-translate-y-0.5 hover:bg-blue-700" data-nav="register" data-i18n="startFree">Kostenlos starten</button>
+                <button class="rounded-xl border border-slate-200 bg-white px-6 py-3.5 text-sm font-bold text-ink transition hover:border-blue-200 hover:bg-blue-50" data-nav="trade" data-i18n="seePrices">Preise ansehen</button>
+              </div>
+              <div class="mt-8 flex flex-wrap items-center gap-x-5 gap-y-2 text-xs font-medium text-muted">
+                <span class="inline-flex items-center gap-2"><svg class="text-positive" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12.5 9.2 17 19 7" /></svg><span data-i18n="noRealTransactions">Keine echten Transaktionen</span></span>
+                <span class="inline-flex items-center gap-2"><svg class="text-positive" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12.5 9.2 17 19 7" /></svg><span data-i18n="demoOnly">Reine Demo-Umgebung</span></span>
+              </div>
+            </div>
+            <div class="relative">
+              <div class="absolute -right-4 -top-7 h-36 w-36 rounded-full bg-blue-100/70 blur-3xl"></div>
+              <div class="absolute -bottom-8 -left-5 h-40 w-40 rounded-full bg-cyan-100/70 blur-3xl"></div>
+              <div class="relative rounded-3xl border border-slate-100 bg-white p-5 shadow-soft sm:p-7">
+                <div class="mb-5 flex items-center justify-between">
+                  <div><p class="text-sm font-bold text-ink" data-i18n="livePrices">Live-Preise</p><p class="mt-1 text-xs text-muted" data-i18n="marketAtAGlance">Der Markt auf einen Blick</p></div>
+                  <span class="inline-flex items-center gap-1.5 rounded-full bg-green-50 px-2.5 py-1.5 text-[10px] font-bold text-positive"><span class="status-dot"></span><span data-i18n="live">LIVE</span></span>
+                </div>
+                <div id="heroPrices" class="divide-y divide-slate-100"></div>
+                <div class="mt-4 flex items-center justify-between text-[11px] text-muted"><span class="price-loading-label" data-i18n="priceLoading">Preis wird aktualisiert…</span><span id="heroPriceStatus">—</span></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="border-y border-slate-100 bg-white py-12 sm:py-14">
+          <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+            <div class="mx-auto mb-9 max-w-2xl text-center"><p class="text-xs font-bold uppercase tracking-[.16em] text-brand" data-i18n="whyEyebrow">DAS MACHT DEN UNTERSCHIED</p><h2 class="mt-3 text-2xl font-extrabold tracking-tight sm:text-3xl" data-i18n="whyTitle">Ein klarer Blick auf digitale Assets</h2><p class="mt-3 text-sm leading-6 text-muted" data-i18n="whyText">Weniger Komplexität, mehr Orientierung – damit Sie sich auf das Wesentliche konzentrieren können.</p></div>
+            <div class="grid gap-5 md:grid-cols-3">
+              <article class="rounded-2xl border border-slate-100 bg-canvas p-6"><div class="mb-4 flex h-11 w-11 items-center justify-center rounded-xl bg-blue-100 text-brand"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 3 19 6v5c0 4.5-2.8 8-7 10-4.2-2-7-5.5-7-10V6l7-3Z"/><path d="m9 12 2 2 4-4"/></svg></div><h3 class="font-bold" data-i18n="trustRegulated">Reguliert*</h3><p class="mt-2 text-sm leading-6 text-muted" data-i18n="trustRegulatedText">Ein auf klare Informationen und nachvollziehbare Abläufe ausgerichtetes Konzept.</p><p class="mt-3 text-[10px] leading-4 text-muted" data-i18n="trustDisclaimer">*Dekoratives Demo-Element, keine Aussage über eine tatsächliche Regulierung oder Lizenz.</p></article>
+              <article class="rounded-2xl border border-slate-100 bg-canvas p-6"><div class="mb-4 flex h-11 w-11 items-center justify-center rounded-xl bg-green-100 text-positive"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="4" y="10" width="16" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3M12 14v3"/></svg></div><h3 class="font-bold" data-i18n="trustCustody">Sichere Verwahrung</h3><p class="mt-2 text-sm leading-6 text-muted" data-i18n="trustCustodyText">Ein durchdachtes Sicherheitsgefühl beginnt mit verständlichem Design und Transparenz.</p></article>
+              <article class="rounded-2xl border border-slate-100 bg-canvas p-6"><div class="mb-4 flex h-11 w-11 items-center justify-center rounded-xl bg-purple-100 text-purple-600"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 13a8 8 0 1 1 16 0"/><path d="M12 13 16 9M5 18h14"/><path d="M12 3v2"/></svg></div><h3 class="font-bold" data-i18n="trustSupport">24/7 Support</h3><p class="mt-2 text-sm leading-6 text-muted" data-i18n="trustSupportText">Eine klare Anlaufstelle und hilfreiche Informationen gehören zu einer guten Nutzererfahrung.</p></article>
+            </div>
+          </div>
+        </div>
+
+        <div class="mx-auto max-w-7xl px-4 py-12 sm:px-6 sm:py-16 lg:px-8">
+          <div class="mb-7 flex flex-col justify-between gap-3 sm:flex-row sm:items-end"><div><p class="text-xs font-bold uppercase tracking-[.16em] text-brand" data-i18n="marketEyebrow">MARKT IM ÜBERBLICK</p><h2 class="mt-2 text-2xl font-extrabold tracking-tight sm:text-3xl" data-i18n="marketTitle">Marktübersicht</h2><p class="mt-2 text-sm text-muted" data-i18n="marketSubtitle">Beobachten Sie ausgewählte Kryptowährungen.</p></div><button class="text-left text-sm font-bold text-brand hover:text-blue-700 sm:text-right" data-nav="trade"><span data-i18n="allMarkets">Alle Märkte ansehen</span> <span aria-hidden="true">→</span></button></div>
+          <div class="mb-3 flex items-center gap-2 text-xs text-muted"><span class="status-dot"></span><span class="price-loading-label" data-i18n="priceLoading">Preis wird aktualisiert…</span><span id="marketPriceStatus" class="ml-auto">—</span></div>
+          <div id="homeMarketGrid" class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4"></div>
+        </div>
+      </section>
+
+      <!-- REGISTER -->
+      <section id="page-register" class="page-section hidden-page">
+        <div class="mx-auto max-w-7xl px-4 py-12 sm:px-6 sm:py-16 lg:px-8">
+          <div class="mx-auto grid max-w-5xl overflow-hidden rounded-3xl border border-slate-100 bg-white shadow-soft md:grid-cols-[.85fr_1.15fr]">
+            <div class="hidden bg-gradient-to-br from-blue-600 to-blue-500 p-10 text-white md:flex md:flex-col md:justify-between"><div><div class="flex h-12 w-12 items-center justify-center rounded-2xl bg-white/15 text-xl font-extrabold">M</div><h2 class="mt-10 text-3xl font-extrabold leading-tight" data-i18n="registerSideTitle">Einfach starten. Alles im Blick.</h2><p class="mt-4 text-sm leading-6 text-blue-100" data-i18n="registerSideText">Erstellen Sie Ihr Demo-Profil und entdecken Sie die Oberfläche von Money Back.</p></div><p class="text-xs text-blue-100" data-i18n="demoEnvironment">Nur ein Portfolio-Prototyp – ohne echte Konten oder Zahlungen.</p></div>
+            <div class="p-6 sm:p-10">
+              <div id="registerFormWrap">
+                <p class="text-xs font-bold uppercase tracking-[.15em] text-brand" data-i18n="joinEyebrow">IHR DEMO-ZUGANG</p><h1 class="mt-2 text-3xl font-extrabold tracking-tight" data-i18n="createAccount">Konto erstellen</h1><p class="mt-2 text-sm text-muted" data-i18n="registerIntro">Legen Sie ein Demo-Profil an. Es werden keine Daten übertragen.</p>
+                <form id="registerForm" class="mt-7 space-y-4">
+                  <div><label class="mb-1.5 block text-sm font-semibold" for="regName" data-i18n="name">Name</label><input id="regName" name="name" class="field" type="text" autocomplete="name" required data-i18n-placeholder="namePlaceholder" placeholder="Ihr Name" /></div>
+                  <div><label class="mb-1.5 block text-sm font-semibold" for="regEmail" data-i18n="email">E-Mail</label><input id="regEmail" name="email" class="field" type="email" autocomplete="email" required placeholder="name@beispiel.de" /></div>
+                  <div><label class="mb-1.5 block text-sm font-semibold" for="regPassword" data-i18n="password">Passwort</label><input id="regPassword" name="password" class="field" type="password" autocomplete="new-password" minlength="8" required data-i18n-placeholder="passwordPlaceholder" placeholder="Mindestens 8 Zeichen" /></div>
+                  <div><label class="mb-1.5 block text-sm font-semibold" for="regPasswordConfirm" data-i18n="confirmPassword">Passwort bestätigen</label><input id="regPasswordConfirm" name="passwordConfirm" class="field" type="password" autocomplete="new-password" required /></div>
+                  <p id="registerError" class="hidden text-sm font-medium text-negative" data-i18n="passwordMismatch">Die Passwörter stimmen nicht überein.</p><p id="registerApiError" class="hidden text-sm font-medium text-negative"></p>
+                  <label class="flex items-start gap-2.5 text-xs leading-5 text-muted"><input id="termsCheck" class="mt-1 h-4 w-4 rounded border-slate-300 text-brand focus:ring-brand" type="checkbox" required /><span><span data-i18n="agreeTerms">Ich stimme den</span> <button type="button" class="font-semibold text-brand hover:underline" data-demo data-i18n="terms">AGB</button> <span data-i18n="andThe">und der</span> <button type="button" class="font-semibold text-brand hover:underline" data-nav="privacy" data-i18n="privacyPolicy">Datenschutzerklärung</button> <span data-i18n="agreeTo">zu.</span></span></label>
+                  <button type="submit" class="w-full rounded-xl bg-brand px-5 py-3.5 text-sm font-bold text-white shadow-sm transition hover:bg-blue-700" data-i18n="createAccount">Konto erstellen</button>
+                </form>
+                <p class="mt-6 text-center text-sm text-muted"><span data-i18n="alreadyAccount">Sie haben bereits ein Konto?</span> <button class="font-bold text-brand hover:underline" data-nav="login" data-i18n="login">Anmelden</button></p>
+              </div>
+              <div id="registerSuccess" class="hidden py-10 text-center">
+                <div class="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-green-50 text-positive"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 7.5 12 13l8-5.5M5 5h14a1 1 0 0 1 1 1v12a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1Z"/><path d="m8 12 2.5 2.5L16 9"/></svg></div>
+                <h2 class="mt-6 text-2xl font-extrabold" data-i18n="confirmEmailTitle">Bestätigen Sie Ihre E-Mail</h2><p class="mx-auto mt-3 max-w-sm text-sm leading-6 text-muted" data-i18n="confirmEmailText">Wir haben Ihnen eine Bestätigungs-E-Mail gesendet. (Demo — es wird keine E-Mail versendet.)</p><button class="mt-7 rounded-xl bg-brand px-6 py-3 text-sm font-bold text-white hover:bg-blue-700" data-nav="login" data-i18n="backToLogin">Zur Anmeldung</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- LOGIN -->
+      <section id="page-login" class="page-section hidden-page">
+        <div class="mx-auto max-w-7xl px-4 py-12 sm:px-6 sm:py-16 lg:px-8">
+          <div class="mx-auto max-w-md rounded-3xl border border-slate-100 bg-white p-6 shadow-soft sm:p-10">
+            <div class="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-blue-50 text-xl font-extrabold text-brand">M</div>
+            <div class="mt-6 text-center"><p class="text-xs font-bold uppercase tracking-[.15em] text-brand" data-i18n="welcomeBack">WILLKOMMEN ZURÜCK</p><h1 class="mt-2 text-3xl font-extrabold tracking-tight" data-i18n="loginTitle">Anmelden</h1><p class="mt-2 text-sm text-muted" data-i18n="loginIntro">Melden Sie sich in Ihrem Demo-Bereich an.</p></div>
+            <form id="loginForm" class="mt-8 space-y-4">
+              <div><label class="mb-1.5 block text-sm font-semibold" for="loginEmail" data-i18n="email">E-Mail</label><input id="loginEmail" class="field" type="email" autocomplete="email" required placeholder="name@beispiel.de" /></div>
+              <div><label class="mb-1.5 block text-sm font-semibold" for="loginPassword" data-i18n="password">Passwort</label><input id="loginPassword" class="field" type="password" autocomplete="current-password" required /></div>
+              <div class="text-right"><button type="button" class="text-xs font-semibold text-brand hover:underline" data-demo data-i18n="forgotPassword">Passwort vergessen?</button></div>
+              <button type="submit" class="w-full rounded-xl bg-brand px-5 py-3.5 text-sm font-bold text-white shadow-sm transition hover:bg-blue-700" data-i18n="loginButton">Einloggen</button>
+            </form>
+            <p class="mt-6 text-center text-sm text-muted"><span data-i18n="noAccount">Noch kein Konto?</span> <button class="font-bold text-brand hover:underline" data-nav="register" data-i18n="register">Registrieren</button></p>
+            <p class="mt-5 rounded-xl bg-slate-50 px-4 py-3 text-center text-xs leading-5 text-muted" data-i18n="loginDemoNote">E-Mail-Verifizierung ist möglich; der Zugang bleibt im Testbetrieb verfügbar.</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- DASHBOARD -->
+      <section id="page-dashboard" class="page-section hidden-page">
+        <div class="mx-auto max-w-7xl px-4 py-10 sm:px-6 sm:py-14 lg:px-8">
+          <div class="mb-7 flex flex-wrap items-end justify-between gap-3"><div><p id="dashboardGreeting" class="text-sm font-medium text-muted" data-i18n="welcomeBack">Willkommen zurück</p><h1 class="mt-1 text-3xl font-extrabold tracking-tight sm:text-4xl" data-i18n="yourPortfolio">Ihr Portfolio</h1><p class="mt-2 text-sm text-muted" data-i18n="dashboardIntro">Eine kompakte Übersicht Ihrer Demo-Assets.</p></div><button id="logoutButton" type="button" class="rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-ink hover:bg-slate-50">Abmelden</button></div>
+          <div class="grid gap-4 md:grid-cols-3">
+            <article class="rounded-2xl bg-white p-5 shadow-soft sm:p-6"><div class="flex items-center justify-between"><p class="text-sm font-semibold text-muted" data-i18n="totalBalance">Gesamtguthaben</p><span class="flex h-9 w-9 items-center justify-center rounded-xl bg-blue-50 text-brand"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="6" width="18" height="14" rx="2"/><path d="M3 10h18M7 15h3"/></svg></span></div><p class="ticker mt-4 text-2xl font-extrabold" id="totalBalanceValue">—</p><p class="mt-1 text-xs text-muted" data-i18n="demoBalance">Statischer Demo-Wert</p></article>
+            <article class="rounded-2xl bg-white p-5 shadow-soft sm:p-6"><div class="flex items-center justify-between"><p class="text-sm font-semibold text-muted" data-i18n="invested">Investiert</p><span class="flex h-9 w-9 items-center justify-center rounded-xl bg-purple-50 text-purple-600"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="m4 17 5-5 3 3 7-8"/><path d="M14 7h5v5"/></svg></span></div><p class="ticker mt-4 text-2xl font-extrabold" id="investedBalanceValue">—</p><p class="mt-1 text-xs text-muted" data-i18n="demoBalance">Statischer Demo-Wert</p></article>
+            <article class="rounded-2xl bg-white p-5 shadow-soft sm:p-6"><div class="flex items-center justify-between"><p class="text-sm font-semibold text-muted" data-i18n="availableBalance">Verfügbares Guthaben</p><span class="flex h-9 w-9 items-center justify-center rounded-xl bg-green-50 text-positive"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 3v18M17 7H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></span></div><p class="ticker mt-4 text-2xl font-extrabold" id="availableBalanceValue">—</p><p class="mt-1 text-xs text-muted" data-i18n="demoBalance">Statischer Demo-Wert</p></article>
+          </div>
+          <div class="mt-8 rounded-2xl border border-slate-100 bg-white shadow-soft">
+            <div class="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 px-5 pt-4 sm:px-6">
+              <div class="flex gap-6"><button id="assetsTab" class="tab-active border-b-2 px-1 pb-4 text-sm font-bold" data-i18n="assets">Assets</button><button id="historyTab" class="border-b-2 border-transparent px-1 pb-4 text-sm font-bold text-muted hover:text-brand" data-i18n="history">Verlauf</button></div>
+              <span class="pb-4 text-xs text-muted" data-i18n="demoPortfolio">Demo-Portfolio</span>
+            </div>
+            <div id="assetsPanel" class="p-4 sm:p-6"><div class="mb-3 flex items-center gap-2 text-xs text-muted"><span class="status-dot"></span><span class="price-loading-label" data-i18n="priceLoading">Preis wird aktualisiert…</span><span id="dashboardPriceStatus" class="ml-auto">—</span></div><div class="overflow-x-auto"><table class="w-full min-w-[680px] border-collapse text-left"><thead><tr class="border-b border-slate-100 text-xs font-semibold text-muted"><th class="px-3 py-3" data-i18n="asset">Asset</th><th class="px-3 py-3" data-i18n="price">Preis</th><th class="px-3 py-3" data-i18n="change24h">24h</th><th class="px-3 py-3 text-right" data-i18n="actions">Aktionen</th></tr></thead><tbody id="dashboardAssetsBody"></tbody></table></div></div>
+            <div id="historyPanel" class="hidden p-4 sm:p-6"><div id="historyList" class="divide-y divide-slate-100"></div></div>
+          </div>
+          <p class="mt-4 text-xs leading-5 text-muted" data-i18n="dashboardDisclaimer">Alle Guthaben und Aktivitäten sind fiktive Beispieldaten und haben keinen realen Geldwert.</p>
+        </div>
+      </section>
+
+      <!-- TRADE -->
+      <section id="page-trade" class="page-section hidden-page">
+        <div class="mx-auto max-w-7xl px-4 py-10 sm:px-6 sm:py-14 lg:px-8">
+          <div class="mb-8"><p class="text-xs font-bold uppercase tracking-[.15em] text-brand" data-i18n="tradeEyebrow">KRYPTOWÄHRUNGEN ENTDECKEN</p><h1 class="mt-2 text-3xl font-extrabold tracking-tight sm:text-4xl" data-i18n="tradeTitle">Handel</h1><p class="mt-2 max-w-2xl text-sm leading-6 text-muted" data-i18n="tradeIntro">Ein einfacher Überblick über einen möglichen Tausch – vollständig als Demo dargestellt.</p></div>
+          <div class="grid items-start gap-5 lg:grid-cols-[1.2fr_.8fr]">
+            <div class="rounded-3xl border border-slate-100 bg-white p-5 shadow-soft sm:p-7">
+              <div class="mb-6 flex items-center justify-between"><h2 class="text-lg font-extrabold" data-i18n="exchangePreview">Tauschvorschau</h2><span class="rounded-full bg-blue-50 px-3 py-1.5 text-[10px] font-bold text-brand" data-i18n="demo">DEMO</span></div>
+              <label class="mb-2 block text-sm font-semibold" for="coinSelect" data-i18n="selectCoin">Kryptowährung auswählen</label>
+              <select id="coinSelect" class="field"></select>
+              <div class="mt-5"><div class="mb-2 flex items-center justify-between gap-2"><label class="text-sm font-semibold" for="tradeAmount" data-i18n="amount">Betrag</label><div class="flex rounded-xl bg-slate-100 p-1"><button id="eurButton" class="currency-active rounded-lg px-3 py-1.5 text-xs font-bold" type="button">EUR</button><button id="usdButton" class="rounded-lg px-3 py-1.5 text-xs font-bold text-muted" type="button">USD</button></div></div><div class="relative"><input id="tradeAmount" class="field pr-16 text-lg font-bold ticker" type="number" min="0" step="any" value="100" /><span id="tradeCurrencySuffix" class="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-sm font-semibold text-muted">EUR</span></div></div>
+              <div class="my-6 rounded-2xl bg-blue-50/70 p-5"><p class="text-xs font-semibold text-muted" data-i18n="estimatedAmount">Geschätzter Betrag</p><p id="estimatedCrypto" class="ticker mt-2 break-words text-2xl font-extrabold text-brand">—</p><p id="estimatedCoinName" class="mt-1 text-xs text-muted">BTC</p></div>
+              <div class="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 pb-4"><span class="text-sm text-muted" data-i18n="currentRate">Aktueller Kurs</span><span id="currentRate" class="ticker text-sm font-bold">—</span></div>
+              <p class="mt-3 text-xs text-muted"><span class="price-loading-label" data-i18n="priceLoading">Preis wird aktualisiert…</span> <span id="tradePriceStatus" class="ml-1">—</span></p>
+              <div class="mt-6 grid grid-cols-2 gap-3"><button class="rounded-xl bg-positive px-5 py-3.5 text-sm font-bold text-white transition hover:brightness-95" data-demo data-i18n="buy">Kaufen</button><button class="rounded-xl bg-negative px-5 py-3.5 text-sm font-bold text-white transition hover:brightness-95" data-demo data-i18n="sell">Verkaufen</button></div>
+              <p class="mt-4 text-[11px] leading-5 text-muted" data-i18n="tradeDisclaimer">Nur eine unverbindliche Rechenvorschau. Es werden keine Aufträge ausgeführt.</p><p id="tradeNoRealNote" class="mt-1 text-[11px] font-semibold text-muted">Demo — keine echte Transaktion</p>
+            </div>
+            <aside class="rounded-3xl border border-slate-100 bg-white p-5 shadow-soft sm:p-7">
+              <p class="text-xs font-bold uppercase tracking-[.14em] text-muted" data-i18n="selectedCoin">Ausgewählter Coin</p>
+              <div class="mt-5 flex items-center gap-4"><div id="selectedCoinIcon" class="coin-symbol">BTC</div><div><h2 id="selectedCoinName" class="text-xl font-extrabold">Bitcoin</h2><p id="selectedCoinSymbol" class="mt-1 text-xs font-semibold text-muted">BTC</p></div></div>
+              <div class="mt-7 rounded-2xl bg-canvas p-4"><p class="text-xs font-semibold text-muted" data-i18n="marketPrice">Marktpreis</p><p id="selectedCoinPrice" class="ticker mt-2 text-2xl font-extrabold">—</p><p id="selectedCoinChange" class="mt-1 text-xs font-bold text-muted">—</p></div>
+              <div class="mt-5 flex items-start gap-3 text-xs leading-5 text-muted"><svg class="mt-0.5 shrink-0 text-brand" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 7h.01"/></svg><p data-i18n="tradeSideNote">Die angezeigten Kurse dienen ausschließlich der Veranschaulichung und können verzögert oder nicht verfügbar sein.</p></div>
+            </aside>
+          </div>
+        </div>
+      </section>
+
+      <!-- ABOUT -->
+      <section id="page-about" class="page-section hidden-page">
+        <div class="mx-auto max-w-7xl px-4 py-12 sm:px-6 sm:py-16 lg:px-8">
+          <div class="mx-auto max-w-3xl text-center"><div class="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-blue-50 text-xl font-extrabold text-brand">M</div><p class="mt-6 text-xs font-bold uppercase tracking-[.15em] text-brand" data-i18n="aboutEyebrow">ÜBER MONEY BACK</p><h1 class="mt-2 text-3xl font-extrabold tracking-tight sm:text-4xl" data-i18n="aboutTitle">Digitales Investieren verständlich gemacht.</h1><p class="mt-5 text-base leading-8 text-muted" data-i18n="aboutText">Money Back ist eine Plattform für den einfachen Handel mit Kryptowährungen. Wir legen Wert auf Sicherheit und Transparenz.</p></div>
+          <div class="mx-auto mt-12 max-w-4xl rounded-3xl border border-slate-100 bg-white p-6 shadow-soft sm:p-9"><div class="flex flex-col justify-between gap-2 sm:flex-row sm:items-end"><div><p class="text-xs font-bold uppercase tracking-[.15em] text-brand" data-i18n="supportedEyebrow">UNSER MARKTUNIVERSUM</p><h2 class="mt-2 text-xl font-extrabold" data-i18n="supportedTitle">Unterstützte Kryptowährungen</h2></div><p class="text-xs text-muted" data-i18n="supportedCount">20 Assets in der Demo-Auswahl</p></div><div id="supportedCoins" class="mt-7 flex flex-wrap gap-2"></div></div>
+          <div class="mx-auto mt-6 flex max-w-4xl flex-wrap items-center justify-between gap-4 rounded-2xl border border-blue-100 bg-blue-50/70 p-5"><div><h3 class="font-bold" data-i18n="aboutCtaTitle">Machen Sie sich selbst ein Bild</h3><p class="mt-1 text-sm text-muted" data-i18n="aboutCtaText">Entdecken Sie die Demo-Oberfläche und die Marktübersicht.</p></div><button class="rounded-xl bg-brand px-5 py-3 text-sm font-bold text-white hover:bg-blue-700" data-nav="trade" data-i18n="exploreMarkets">Märkte entdecken</button></div>
+        </div>
+      </section>
+
+      <!-- CONTACT -->
+      <section id="page-contact" class="page-section hidden-page">
+        <div class="mx-auto max-w-7xl px-4 py-12 sm:px-6 sm:py-16 lg:px-8">
+          <div class="mx-auto max-w-5xl"><div class="mb-8"><p class="text-xs font-bold uppercase tracking-[.15em] text-brand" data-i18n="contactEyebrow">WIR SIND FÜR SIE DA</p><h1 class="mt-2 text-3xl font-extrabold tracking-tight sm:text-4xl" data-i18n="contactTitle">Kontakt</h1><p class="mt-2 max-w-2xl text-sm leading-6 text-muted" data-i18n="contactIntro">Sie haben eine Frage? Schreiben Sie uns über das Demo-Formular.</p></div>
+            <div class="grid gap-5 md:grid-cols-[1.1fr_.9fr]"><div class="rounded-3xl border border-slate-100 bg-white p-6 shadow-soft sm:p-8"><form id="contactForm" class="space-y-4"><div><label for="contactName" class="mb-1.5 block text-sm font-semibold" data-i18n="name">Name</label><input id="contactName" class="field" type="text" maxlength="120" required data-i18n-placeholder="namePlaceholder" placeholder="Ihr Name" /></div><div><label for="contactEmail" class="mb-1.5 block text-sm font-semibold" data-i18n="email">E-Mail</label><input id="contactEmail" class="field" type="email" maxlength="320" required placeholder="name@beispiel.de" /></div><div><label for="contactMessage" class="mb-1.5 block text-sm font-semibold" data-i18n="message">Nachricht</label><textarea id="contactMessage" class="field min-h-[140px] resize-y" maxlength="3500" required data-i18n-placeholder="messagePlaceholder" placeholder="Wie können wir Ihnen helfen?"></textarea></div><button type="submit" class="rounded-xl bg-brand px-6 py-3.5 text-sm font-bold text-white hover:bg-blue-700" data-i18n="send">Senden</button></form></div>
+              <div class="rounded-3xl border border-slate-100 bg-white p-6 shadow-soft sm:p-8"><h2 class="text-lg font-extrabold" data-i18n="contactDetails">Kontaktdaten</h2><p class="mt-2 text-sm leading-6 text-muted" data-i18n="contactDetailsText">Die folgenden Angaben sind Platzhalter und müssen vor einer Veröffentlichung ersetzt werden.</p><div class="mt-7 space-y-5"><div class="flex gap-3"><span class="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-50 text-brand">✉</span><div><p class="text-xs font-semibold text-muted" data-i18n="email">E-Mail</p><p class="mt-1 text-sm font-bold">[E-Mail]</p></div></div><div class="flex gap-3"><span class="flex h-10 w-10 items-center justify-center rounded-xl bg-green-50 text-positive">⌕</span><div><p class="text-xs font-semibold text-muted" data-i18n="phone">Telefon</p><p class="mt-1 text-sm font-bold">[Telefon]</p></div></div><div class="flex gap-3"><span class="flex h-10 w-10 items-center justify-center rounded-xl bg-purple-50 text-purple-600">⌖</span><div><p class="text-xs font-semibold text-muted" data-i18n="address">Adresse</p><p class="mt-1 text-sm font-bold">[Adresse]</p></div></div></div></div></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- PRIVACY -->
+      <section id="page-privacy" class="page-section hidden-page">
+        <div class="mx-auto max-w-7xl px-4 py-10 sm:px-6 sm:py-14 lg:px-8"><article class="mx-auto max-w-4xl rounded-3xl border border-slate-100 bg-white p-6 shadow-soft sm:p-10 lg:p-12"><p class="text-xs font-bold uppercase tracking-[.15em] text-brand" data-i18n="legalEyebrow">RECHTLICHE HINWEISE</p><h1 class="mt-2 text-3xl font-extrabold tracking-tight" data-i18n="privacyTitle">Datenschutzerklärung</h1><div class="mt-5 rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm leading-6 text-amber-900" data-i18n="privacyTemplateNote">Wichtiger Hinweis: Dieser Text ist ein unverbindliches Muster für ein Demo-Projekt. Er muss an die tatsächlichen Datenverarbeitungen angepasst und vor einer Veröffentlichung rechtlich geprüft werden.</div>
+            <div class="mt-8 space-y-7 text-sm leading-7 text-slate-600">
+              <section><h2 class="text-base font-bold text-ink" data-i18n="privacy1Title">1. Verantwortliche Stelle</h2><p class="mt-2" data-i18n="privacy1Text">Verantwortlich für die Verarbeitung personenbezogener Daten im Sinne der Datenschutz-Grundverordnung (DSGVO) ist: [Firmenname], [Adresse], [E-Mail]. Bitte ergänzen Sie hier die vollständigen Kontaktdaten des tatsächlich Verantwortlichen.</p></section>
+              <section><h2 class="text-base font-bold text-ink" data-i18n="privacy2Title">2. Datenerfassung und -verarbeitung</h2><p class="mt-2" data-i18n="privacy2Text">Beim Besuch dieser Website können technisch erforderliche Informationen verarbeitet werden, beispielsweise IP-Adresse, Datum und Uhrzeit des Zugriffs, aufgerufene Seiten, Browsertyp, Betriebssystem und Referrer-URL. Wenn Sie Formulare verwenden, können außerdem Name, E-Mail-Adresse und die von Ihnen eingegebenen Nachrichteninhalte verarbeitet werden. Diese Angaben werden in dieser statischen Demo nicht an einen eigenen Server übermittelt. Ergänzen Sie diesen Abschnitt, falls in einer späteren Version weitere Dienste oder Speichertechnologien eingesetzt werden.</p><p class="mt-2" data-i18n="privacy2Purpose">Die Verarbeitung kann der Bereitstellung der Website, der technischen Sicherheit, der Fehleranalyse und der Beantwortung von Anfragen dienen. Daten sollten nur erhoben werden, soweit dies für den jeweiligen Zweck erforderlich ist.</p></section>
+              <section><h2 class="text-base font-bold text-ink" data-i18n="privacy3Title">3. Rechtsgrundlagen</h2><p class="mt-2" data-i18n="privacy3Text">Soweit personenbezogene Daten verarbeitet werden, kommen – abhängig vom konkreten Zweck – insbesondere Art. 6 Abs. 1 lit. a DSGVO (Einwilligung), Art. 6 Abs. 1 lit. b DSGVO (Vertrag bzw. vorvertragliche Maßnahmen), Art. 6 Abs. 1 lit. c DSGVO (rechtliche Verpflichtung) oder Art. 6 Abs. 1 lit. f DSGVO (berechtigtes Interesse) als Rechtsgrundlagen in Betracht. Die jeweils einschlägige Grundlage ist vom Betreiber konkret zu prüfen und anzugeben.</p></section>
+              <section><h2 class="text-base font-bold text-ink" data-i18n="privacy4Title">4. Weitergabe an Dritte</h2><p class="mt-2" data-i18n="privacy4Text">Eine Weitergabe personenbezogener Daten erfolgt nur, wenn hierfür eine Rechtsgrundlage besteht, Sie eingewilligt haben, die Weitergabe zur Vertragserfüllung erforderlich ist oder eine gesetzliche Verpflichtung besteht. Werden Hosting-, Analyse- oder andere Dienstleister eingesetzt, sind deren Anbieter, Zwecke, Speicherorte und gegebenenfalls geeignete Garantien hier konkret zu benennen. Für diese Demo ist außer dem Abruf öffentlicher Marktdaten kein Backend vorgesehen.</p></section>
+              <section><h2 class="text-base font-bold text-ink" data-i18n="privacy5Title">5. Speicherdauer</h2><p class="mt-2" data-i18n="privacy5Text">Personenbezogene Daten werden nur so lange gespeichert, wie es für den jeweiligen Zweck erforderlich ist oder gesetzliche Aufbewahrungspflichten bestehen. Entfällt der Zweck oder läuft eine vorgeschriebene Speicherfrist ab, werden die Daten nach Maßgabe der gesetzlichen Vorgaben gelöscht oder in ihrer Verarbeitung eingeschränkt. Konkrete Fristen sind vom Betreiber einzutragen.</p></section>
+              <section><h2 class="text-base font-bold text-ink" data-i18n="privacy6Title">6. Ihre Rechte</h2><p class="mt-2" data-i18n="privacy6Intro">Sie haben im Rahmen der gesetzlichen Voraussetzungen insbesondere folgende Rechte:</p><ul class="mt-2 list-disc space-y-1 pl-5"><li data-i18n="privacyRight1">Auskunft über die verarbeiteten personenbezogenen Daten (Art. 15 DSGVO).</li><li data-i18n="privacyRight2">Berichtigung unrichtiger oder Vervollständigung unvollständiger Daten (Art. 16 DSGVO).</li><li data-i18n="privacyRight3">Löschung personenbezogener Daten (Art. 17 DSGVO).</li><li data-i18n="privacyRight4">Einschränkung der Verarbeitung (Art. 18 DSGVO).</li><li data-i18n="privacyRight5">Widerruf einer erteilten Einwilligung mit Wirkung für die Zukunft (Art. 7 Abs. 3 DSGVO).</li></ul><p class="mt-2" data-i18n="privacy6More">Außerdem können Sie sich bei einer zuständigen Datenschutz-Aufsichtsbehörde beschweren. Ob und in welchem Umfang ein Recht besteht, richtet sich nach den gesetzlichen Voraussetzungen des Einzelfalls.</p></section>
+              <section><h2 class="text-base font-bold text-ink" data-i18n="privacy7Title">7. Kontakt zum Datenschutz</h2><p class="mt-2" data-i18n="privacy7Text">Für Fragen zur Verarbeitung personenbezogener Daten oder zur Ausübung Ihrer Rechte kontaktieren Sie bitte: [E-Mail-Adresse].</p></section>
+              <p class="border-t border-slate-100 pt-5 font-semibold text-ink" data-i18n="privacyClosing">Bei Fragen zum Datenschutz wenden Sie sich bitte an: [E-Mail-Adresse]</p>
+            </div>
+          </article></div>
+      </section>
+
+      <!-- IMPRINT -->
+      <section id="page-imprint" class="page-section hidden-page">
+        <div class="mx-auto max-w-7xl px-4 py-10 sm:px-6 sm:py-14 lg:px-8"><article class="mx-auto max-w-4xl rounded-3xl border border-slate-100 bg-white p-6 shadow-soft sm:p-10 lg:p-12"><p class="text-xs font-bold uppercase tracking-[.15em] text-brand" data-i18n="legalEyebrow">RECHTLICHE HINWEISE</p><h1 class="mt-2 text-3xl font-extrabold tracking-tight" data-i18n="imprintTitle">Impressum</h1><div class="mt-5 rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm leading-6 text-amber-900" data-i18n="imprintTemplateNote">Muster-Impressum: Bitte alle Platzhalter ersetzen und die Angaben vor Veröffentlichung rechtlich prüfen lassen. Dieses Demo-Projekt stellt keine Rechtsberatung dar.</div><div class="mt-8 space-y-7 text-sm leading-7 text-slate-600">
+            <section><h2 class="text-base font-bold text-ink" data-i18n="imprint1Title">Angaben gemäß § 5 DDG</h2><p class="mt-2">[Firmenname]<br />[Adresse]<br /><span data-i18n="imprintRepresentative">Vertreten durch:</span> [Vertretungsberechtigte Person]</p></section>
+            <section><h2 class="text-base font-bold text-ink" data-i18n="imprint2Title">Kontakt</h2><p class="mt-2"><span data-i18n="phone">Telefon</span>: [Telefon]<br /><span data-i18n="email">E-Mail</span>: [E-Mail]</p></section>
+            <section><h2 class="text-base font-bold text-ink" data-i18n="imprint3Title">Register und Umsatzsteuer</h2><p class="mt-2"><span data-i18n="imprintVat">Umsatzsteuer-Identifikationsnummer gemäß § 27a UStG:</span> [USt-IdNr.]<br /><span data-i18n="imprintRegister">Handelsregister:</span> [Handelsregister]</p></section>
+            <section><h2 class="text-base font-bold text-ink" data-i18n="imprint4Title">Haftungsausschluss</h2><p class="mt-2" data-i18n="imprint4Text">Die Inhalte dieser Website wurden mit Sorgfalt erstellt. Für Richtigkeit, Vollständigkeit und Aktualität wird – soweit gesetzlich zulässig – keine Gewähr übernommen. Die Nutzung der Inhalte erfolgt auf eigene Verantwortung. Externe Links führen zu Inhalten fremder Anbieter, auf die kein Einfluss besteht.</p></section>
+            <section><h2 class="text-base font-bold text-ink" data-i18n="imprint5Title">Urheberrecht</h2><p class="mt-2" data-i18n="imprint5Text">Die auf dieser Website erstellten Inhalte und Werke unterliegen dem anwendbaren Urheberrecht. Eine Verwendung außerhalb der gesetzlichen Schranken bedarf der vorherigen Zustimmung der jeweiligen Rechteinhaber.</p></section>
+          </div></article></div>
+      </section>
+    </main>
+
+    <!-- Footer -->
+    <footer class="mt-auto border-t border-slate-100 bg-white">
+      <div class="mx-auto max-w-7xl px-4 py-9 sm:px-6 lg:px-8">
+        <div class="flex flex-col justify-between gap-7 md:flex-row md:items-start">
+          <div class="max-w-xs"><div class="flex items-center gap-2.5"><span class="flex h-9 w-9 items-center justify-center rounded-xl bg-brand text-sm font-extrabold text-white">M</span><span class="font-extrabold">Money Back</span></div><p class="mt-3 text-xs leading-5 text-muted" data-i18n="footerText">Ein übersichtlicher Krypto-Prototyp für Lern- und Portfoliozwecke.</p><span class="mt-4 inline-flex items-center gap-2 rounded-full border border-green-100 bg-green-50 px-3 py-1.5 text-[10px] font-bold text-green-700"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="10" width="16" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg><span data-i18n="ssl">SSL Verschlüsselt</span></span></div>
+          <div class="flex flex-wrap gap-x-6 gap-y-3 text-xs font-semibold text-muted"><button class="hover:text-brand" data-nav="about" data-i18n="about">Über uns</button><button class="hover:text-brand" data-nav="contact" data-i18n="contact">Kontakt</button><button class="hover:text-brand" data-nav="privacy" data-i18n="privacy">Datenschutz</button><button class="hover:text-brand" data-nav="imprint" data-i18n="imprint">Impressum</button><button class="hover:text-brand" data-demo data-i18n="terms">AGB</button></div>
+        </div>
+        <div class="mt-8 flex flex-col gap-2 border-t border-slate-100 pt-5 text-[11px] text-muted sm:flex-row sm:items-center sm:justify-between"><span>© <span id="currentYear">2026</span> Money Back. <span data-i18n="allRights">Alle Rechte vorbehalten.</span></span><span data-i18n="footerDemo">Demo-Projekt – keine Finanz- oder Anlageberatung.</span></div>
+      </div>
+    </footer>
+  </div>
+
+  <!-- Floating support chat: messages are stored server-side for signed-in test accounts. -->
+  <div id="appToast" class="fixed left-1/2 top-20 z-[120] hidden w-[min(92vw,460px)] -translate-x-1/2 rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-ink shadow-xl" role="status" aria-live="polite"></div>
+  <div id="supportWidget" class="fixed bottom-5 right-5 z-[80] flex flex-col items-end gap-3">
+    <section id="supportPanel" class="hidden w-[min(92vw,370px)] overflow-hidden rounded-2xl border border-slate-100 bg-white shadow-2xl">
+      <div class="flex items-center justify-between bg-brand px-4 py-3.5 text-white"><div><p id="supportTitle" class="text-sm font-bold">Money Back Support</p><p id="supportSubtitle" class="mt-0.5 text-[11px] text-blue-100">Wir helfen Ihnen gerne</p></div><button id="supportClose" type="button" class="flex h-8 w-8 items-center justify-center rounded-lg text-xl hover:bg-white/15" aria-label="Close chat">×</button></div>
+      <div id="supportMessages" class="flex h-80 flex-col gap-2 overflow-y-auto bg-slate-50 p-3"><p id="supportWelcome" class="rounded-xl bg-white p-3 text-xs leading-5 text-muted">Hallo! Wie können wir Ihnen helfen?</p></div>
+      <form id="supportForm" class="flex gap-2 border-t border-slate-100 bg-white p-3"><input id="supportInput" class="field min-w-0 flex-1 py-2.5 text-sm" maxlength="4000" autocomplete="off" placeholder="Ihre Nachricht…" required /><button id="supportSend" class="rounded-xl bg-brand px-4 text-sm font-bold text-white" type="submit">Senden</button></form>
+      <p id="supportStatus" class="hidden bg-white px-3 pb-3 text-xs text-negative"></p>
+    </section>
+    <button id="supportLauncher" type="button" class="flex items-center gap-2 rounded-full bg-brand px-5 py-3.5 text-sm font-bold text-white shadow-[0_8px_24px_rgba(27,107,255,.25)] transition hover:-translate-y-0.5 hover:bg-blue-700"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M20 11.5a7.5 7.5 0 0 1-7.5 7.5H7l-3 2v-5.5A7.5 7.5 0 1 1 20 11.5Z"/><path d="M8 11h8M8 14h5"/></svg><span id="supportLauncherText">Support</span></button>
+  </div>
+
+  <!-- One shared demo modal -->
+  <div id="demoModal" class="fixed inset-0 z-[100] hidden items-center justify-center bg-slate-950/45 p-4" role="dialog" aria-modal="true" aria-labelledby="demoModalTitle">
+    <div class="w-full max-w-md rounded-3xl bg-white p-7 text-center shadow-2xl sm:p-9" role="document">
+      <div class="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-blue-50 text-brand"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 3 19 6v5c0 4.5-2.8 8-7 10-4.2-2-7-5.5-7-10V6l7-3Z"/><path d="M12 8v4M12 16h.01"/></svg></div>
+      <h2 id="demoModalTitle" class="mt-5 text-2xl font-extrabold" data-i18n="demoModalTitle">Demo-Modus</h2>
+      <p class="mt-3 text-sm leading-6 text-muted" data-i18n="demoModalText">Diese Funktion ist in der Vorschau nicht verfügbar.</p>
+      <button id="closeDemoModal" class="mt-7 w-full rounded-xl bg-brand px-5 py-3 text-sm font-bold text-white transition hover:bg-blue-700" data-i18n="close">Schließen</button>
+    </div>
+  </div>
+
+  <script>
+    'use strict';
+
+    const translations = {
+      de: {
+        languageLabel:'Sprache auswählen',homeAriaLabel:'Money Back – Startseite',mobileMenuLabel:'Navigation öffnen',home:'Startseite',dashboard:'Dashboard',trade:'Handel',about:'Über uns',contact:'Kontakt',privacy:'Datenschutz',imprint:'Impressum',login:'Anmelden',register:'Registrieren',
+        heroBadge:'Einfach. Übersichtlich. Digital.',heroTitle:'Ihr Geld. Sicher verwahrt.',heroSubtitle:'Entdecken Sie Kryptowährungen auf einfache Weise. Behalten Sie Ihre Märkte im Blick – klar, transparent und ohne komplizierte Werkzeuge.',startFree:'Kostenlos starten',seePrices:'Preise ansehen',noRealTransactions:'Keine echten Transaktionen',demoOnly:'Reine Demo-Umgebung',livePrices:'Live-Preise',marketAtAGlance:'Der Markt auf einen Blick',live:'LIVE',priceLoading:'Preis wird aktualisiert…',priceUpdated:'Aktualisiert',priceUnavailable:'Kurse nicht verfügbar',
+        whyEyebrow:'DAS MACHT DEN UNTERSCHIED',whyTitle:'Ein klarer Blick auf digitale Assets',whyText:'Weniger Komplexität, mehr Orientierung – damit Sie sich auf das Wesentliche konzentrieren können.',trustRegulated:'Reguliert*',trustRegulatedText:'Ein auf klare Informationen und nachvollziehbare Abläufe ausgerichtetes Konzept.',trustDisclaimer:'*Dekoratives Demo-Element, keine Aussage über eine tatsächliche Regulierung oder Lizenz.',trustCustody:'Sichere Verwahrung',trustCustodyText:'Ein durchdachtes Sicherheitsgefühl beginnt mit verständlichem Design und Transparenz.',trustSupport:'24/7 Support',trustSupportText:'Eine klare Anlaufstelle und hilfreiche Informationen gehören zu einer guten Nutzererfahrung.',marketEyebrow:'MARKT IM ÜBERBLICK',marketTitle:'Marktübersicht',marketSubtitle:'Beobachten Sie ausgewählte Kryptowährungen.',allMarkets:'Alle Märkte ansehen',
+        registerSideTitle:'Einfach starten. Alles im Blick.',registerSideText:'Erstellen Sie Ihr Demo-Profil und entdecken Sie die Oberfläche von Money Back.',demoEnvironment:'Virtuelles Testkonto – keine Einzahlungen, Zahlungen oder echten Krypto-Transaktionen.',joinEyebrow:'IHR DEMO-ZUGANG',createAccount:'Konto erstellen',registerIntro:'Erstellen Sie ein Testkonto. Ihre Zugangsdaten werden für den Demo-Zugang gespeichert.',name:'Name',email:'E-Mail',password:'Passwort',confirmPassword:'Passwort bestätigen',namePlaceholder:'Ihr Name',passwordPlaceholder:'Mindestens 8 Zeichen',passwordMismatch:'Die Passwörter stimmen nicht überein.',agreeTerms:'Ich stimme den',terms:'AGB',andThe:'und der',privacyPolicy:'Datenschutzerklärung',agreeTo:'zu.',alreadyAccount:'Sie haben bereits ein Konto?',confirmEmailTitle:'Bestätigen Sie Ihre E-Mail',confirmEmailText:'Wir haben Ihnen eine Bestätigungs-E-Mail gesendet. Bitte prüfen Sie Ihren Posteingang.',backToLogin:'Zur Anmeldung',
+        welcomeBack:'Willkommen zurück',loginTitle:'Anmelden',loginIntro:'Melden Sie sich in Ihrem Demo-Bereich an.',forgotPassword:'Passwort vergessen?',loginButton:'Einloggen',noAccount:'Noch kein Konto?',loginDemoNote:'Die E-Mail-Bestätigung ist vorgesehen; der Zugang bleibt im Testbetrieb verfügbar.',yourPortfolio:'Ihr Portfolio',dashboardIntro:'Eine kompakte Übersicht Ihrer Demo-Assets.',totalBalance:'Gesamtguthaben',invested:'Investiert',availableBalance:'Verfügbares Guthaben',demoBalance:'Virtueller Kontowert',assets:'Assets',history:'Verlauf',demoPortfolio:'Demo-Portfolio',asset:'Asset',price:'Preis',change24h:'24h',actions:'Aktionen',buy:'Kaufen',sell:'Verkaufen',dashboardDisclaimer:'Alle Guthaben und Aktivitäten sind fiktive Beispieldaten und haben keinen realen Geldwert.',
+        tradeEyebrow:'KRYPTOWÄHRUNGEN ENTDECKEN',tradeTitle:'Handel',tradeIntro:'Ein einfacher Überblick über einen möglichen Tausch – vollständig als Demo dargestellt.',exchangePreview:'Tauschvorschau',demo:'DEMO',selectCoin:'Kryptowährung auswählen',amount:'Betrag',estimatedAmount:'Geschätzter Betrag',currentRate:'Aktueller Kurs',tradeDisclaimer:'Nur eine unverbindliche Rechenvorschau. Es werden keine Aufträge ausgeführt.',selectedCoin:'Ausgewählter Coin',marketPrice:'Marktpreis',tradeSideNote:'Die angezeigten Kurse dienen ausschließlich der Veranschaulichung und können verzögert oder nicht verfügbar sein.',
+        aboutEyebrow:'ÜBER MONEY BACK',aboutTitle:'Digitales Investieren verständlich gemacht.',aboutText:'Money Back ist eine Plattform für den einfachen Handel mit Kryptowährungen. Wir legen Wert auf Sicherheit und Transparenz.',supportedEyebrow:'UNSER MARKTUNIVERSUM',supportedTitle:'Unterstützte Kryptowährungen',supportedCount:'20 Assets in der Demo-Auswahl',aboutCtaTitle:'Machen Sie sich selbst ein Bild',aboutCtaText:'Entdecken Sie die Demo-Oberfläche und die Marktübersicht.',exploreMarkets:'Märkte entdecken',
+        contactEyebrow:'WIR SIND FÜR SIE DA',contactTitle:'Kontakt',contactIntro:'Sie haben eine Frage? Schreiben Sie uns über das Demo-Formular.',message:'Nachricht',messagePlaceholder:'Wie können wir Ihnen helfen?',send:'Senden',contactDetails:'Kontaktdaten',contactDetailsText:'Die folgenden Angaben sind Platzhalter und müssen vor einer Veröffentlichung ersetzt werden.',phone:'Telefon',address:'Adresse',
+        legalEyebrow:'RECHTLICHE HINWEISE',privacyTitle:'Datenschutzerklärung',privacyTemplateNote:'Wichtiger Hinweis: Dieser Text ist ein unverbindliches Muster für ein Demo-Projekt. Er muss an die tatsächlichen Datenverarbeitungen angepasst und vor einer Veröffentlichung rechtlich geprüft werden.',privacy1Title:'1. Verantwortliche Stelle',privacy1Text:'Verantwortlich für die Verarbeitung personenbezogener Daten im Sinne der Datenschutz-Grundverordnung (DSGVO) ist: [Firmenname], [Adresse], [E-Mail]. Bitte ergänzen Sie hier die vollständigen Kontaktdaten des tatsächlich Verantwortlichen.',privacy2Title:'2. Datenerfassung und -verarbeitung',privacy2Text:'Bei der Registrierung und Nutzung des Testkontos werden insbesondere Name, E-Mail-Adresse, ein ausschließlich gehashter Passwortwert, Sitzungs- und Bestätigungsdaten, virtuelle Kontostände sowie Support-Nachrichten verarbeitet. Bei technischen Zugriffen können zusätzlich IP-Adresse, Datum und Uhrzeit, Browsertyp, Betriebssystem und aufgerufene Seiten verarbeitet werden. Das Passwort wird nicht im Klartext gespeichert. Nachrichten aus dem Support-Chat können zur Beantwortung an den KI-Dienst DeepSeek übermittelt werden. Ergänzen Sie die konkreten Zwecke, Hosting-Standorte und Speicherorte entsprechend der tatsächlich eingesetzten Konfiguration.',privacy2Purpose:'Die Verarbeitung kann der Bereitstellung der Website, der technischen Sicherheit, der Fehleranalyse und der Beantwortung von Anfragen dienen. Daten sollten nur erhoben werden, soweit dies für den jeweiligen Zweck erforderlich ist.',privacy3Title:'3. Rechtsgrundlagen',privacy3Text:'Soweit personenbezogene Daten verarbeitet werden, kommen – abhängig vom konkreten Zweck – insbesondere Art. 6 Abs. 1 lit. a DSGVO (Einwilligung), Art. 6 Abs. 1 lit. b DSGVO (Vertrag bzw. vorvertragliche Maßnahmen), Art. 6 Abs. 1 lit. c DSGVO (rechtliche Verpflichtung) oder Art. 6 Abs. 1 lit. f DSGVO (berechtigtes Interesse) als Rechtsgrundlagen in Betracht. Die jeweils einschlägige Grundlage ist vom Betreiber konkret zu prüfen und anzugeben.',privacy4Title:'4. Weitergabe an Dritte',privacy4Text:'Zur Bereitstellung des Testbetriebs können personenbezogene Daten an technische Auftragsverarbeiter übermittelt werden, insbesondere an den Hosting-Anbieter [Anbieter], den PostgreSQL-Datenbankanbieter [Supabase/Neon], Resend für Bestätigungs-E-Mails sowie DeepSeek für Antworten im Support-Chat. Beim Abruf öffentlicher Marktdaten wird außerdem eine Verbindung zum jeweiligen Marktdatenanbieter hergestellt. Bitte tragen Sie die tatsächlich eingesetzten Anbieter, deren Sitz, Datenverarbeitungsorte, Zwecke, Vertragsgrundlagen und gegebenenfalls Drittlandgarantien ein. Eine Weitergabe zum Zweck echter Zahlungen oder Krypto-Transaktionen findet in dieser Anwendung nicht statt.',privacy5Title:'5. Speicherdauer',privacy5Text:'Personenbezogene Daten werden nur so lange gespeichert, wie es für den jeweiligen Zweck erforderlich ist oder gesetzliche Aufbewahrungspflichten bestehen. Entfällt der Zweck oder läuft eine vorgeschriebene Speicherfrist ab, werden die Daten nach Maßgabe der gesetzlichen Vorgaben gelöscht oder in ihrer Verarbeitung eingeschränkt. Konkrete Fristen sind vom Betreiber einzutragen.',privacy6Title:'6. Ihre Rechte',privacy6Intro:'Sie haben im Rahmen der gesetzlichen Voraussetzungen insbesondere folgende Rechte:',privacyRight1:'Auskunft über die verarbeiteten personenbezogenen Daten (Art. 15 DSGVO).',privacyRight2:'Berichtigung unrichtiger oder Vervollständigung unvollständiger Daten (Art. 16 DSGVO).',privacyRight3:'Löschung personenbezogener Daten (Art. 17 DSGVO).',privacyRight4:'Einschränkung der Verarbeitung (Art. 18 DSGVO).',privacyRight5:'Widerruf einer erteilten Einwilligung mit Wirkung für die Zukunft (Art. 7 Abs. 3 DSGVO).',privacy6More:'Außerdem können Sie sich bei einer zuständigen Datenschutz-Aufsichtsbehörde beschweren. Ob und in welchem Umfang ein Recht besteht, richtet sich nach den gesetzlichen Voraussetzungen des Einzelfalls.',privacy7Title:'7. Kontakt zum Datenschutz',privacy7Text:'Für Fragen zur Verarbeitung personenbezogener Daten oder zur Ausübung Ihrer Rechte kontaktieren Sie bitte: [E-Mail-Adresse].',privacyClosing:'Bei Fragen zum Datenschutz wenden Sie sich bitte an: [E-Mail-Adresse]',
+        imprintTitle:'Impressum',imprintTemplateNote:'Muster-Impressum: Bitte alle Platzhalter ersetzen und die Angaben vor Veröffentlichung rechtlich prüfen lassen. Dieses Demo-Projekt stellt keine Rechtsberatung dar.',imprint1Title:'Angaben gemäß § 5 DDG',imprintRepresentative:'Vertreten durch:',imprint2Title:'Kontakt',imprint3Title:'Register und Umsatzsteuer',imprintVat:'Umsatzsteuer-Identifikationsnummer gemäß § 27a UStG:',imprintRegister:'Handelsregister:',imprint4Title:'Haftungsausschluss',imprint4Text:'Die Inhalte dieser Website wurden mit Sorgfalt erstellt. Für Richtigkeit, Vollständigkeit und Aktualität wird – soweit gesetzlich zulässig – keine Gewähr übernommen. Die Nutzung der Inhalte erfolgt auf eigene Verantwortung. Externe Links führen zu Inhalten fremder Anbieter, auf die kein Einfluss besteht.',imprint5Title:'Urheberrecht',imprint5Text:'Die auf dieser Website erstellten Inhalte und Werke unterliegen dem anwendbaren Urheberrecht. Eine Verwendung außerhalb der gesetzlichen Schranken bedarf der vorherigen Zustimmung der jeweiligen Rechteinhaber.',
+        footerText:'Ein übersichtlicher Krypto-Prototyp für Lern- und Portfoliozwecke.',ssl:'SSL Verschlüsselt',allRights:'Alle Rechte vorbehalten.',footerDemo:'Demo-Projekt – keine Finanz- oder Anlageberatung.',demoModalTitle:'Demo-Modus',demoModalText:'Diese Funktion ist in der Vorschau nicht verfügbar.',close:'Schließen',statusCompleted:'Abgeschlossen',typeBuy:'Kauf',typeSell:'Verkauf',
+        historyRows:[['08.11.2026','Kauf','BTC','1.250,00 €','0,0142 BTC'],['04.11.2026','Verkauf','ETH','420,00 €','0,1420 ETH'],['29.10.2026','Kauf','SOL','300,00 €','1,8750 SOL'],['22.10.2026','Kauf','XRP','180,00 €','240,000 XRP'],['16.10.2026','Verkauf','ADA','95,00 €','145,000 ADA'],['09.10.2026','Kauf','LINK','250,00 €','12,500 LINK']]
+      },
+      en: {
+        languageLabel:'Select language',homeAriaLabel:'Money Back – Home',mobileMenuLabel:'Open navigation',home:'Home',dashboard:'Dashboard',trade:'Trade',about:'About us',contact:'Contact',privacy:'Privacy',imprint:'Legal notice',login:'Log in',register:'Sign up',
+        heroBadge:'Simple. Clear. Digital.',heroTitle:'Your money. Kept in view.',heroSubtitle:'Explore cryptocurrencies with ease. Keep an eye on the markets with a clear, transparent experience and no complicated tools.',startFree:'Get started for free',seePrices:'View prices',noRealTransactions:'No real transactions',demoOnly:'Demo environment only',livePrices:'Live prices',marketAtAGlance:'The market at a glance',live:'LIVE',priceLoading:'Price is updating…',priceUpdated:'Updated',priceUnavailable:'Prices unavailable',
+        whyEyebrow:'WHAT SETS US APART',whyTitle:'A clearer view of digital assets',whyText:'Less complexity, more clarity – so you can focus on what matters.',trustRegulated:'Regulated*',trustRegulatedText:'A concept focused on clear information and transparent processes.',trustDisclaimer:'*Decorative demo element; not a statement of actual regulation or licensing.',trustCustody:'Secure custody',trustCustodyText:'A considered sense of security starts with clear design and transparency.',trustSupport:'24/7 support',trustSupportText:'A clear point of contact and helpful information are part of a good user experience.',marketEyebrow:'MARKET AT A GLANCE',marketTitle:'Market overview',marketSubtitle:'Follow selected cryptocurrencies.',allMarkets:'View all markets',
+        registerSideTitle:'Get started. See the whole picture.',registerSideText:'Create your demo profile and explore the Money Back interface.',demoEnvironment:'Virtual test account — no deposits, payments or real crypto transactions.',joinEyebrow:'YOUR DEMO ACCESS',createAccount:'Create account',registerIntro:'Create a test account. Your credentials are stored for your demo access.',name:'Name',email:'Email',password:'Password',confirmPassword:'Confirm password',namePlaceholder:'Your name',passwordPlaceholder:'At least 8 characters',passwordMismatch:'The passwords do not match.',agreeTerms:'I agree to the',terms:'Terms',andThe:'and the',privacyPolicy:'Privacy Policy',agreeTo:'.',alreadyAccount:'Already have an account?',confirmEmailTitle:'Confirm your email',confirmEmailText:'We sent a confirmation email. Please check your inbox.',backToLogin:'Back to log in',
+        welcomeBack:'Welcome back',loginTitle:'Log in',loginIntro:'Access your demo area.',forgotPassword:'Forgot password?',loginButton:'Log in',noAccount:'No account yet?',loginDemoNote:'Email verification is supported; test accounts can still access the dashboard.',yourPortfolio:'Your portfolio',dashboardIntro:'A compact overview of your demo assets.',totalBalance:'Total balance',invested:'Invested',availableBalance:'Available balance',demoBalance:'Virtual account value',assets:'Assets',history:'History',demoPortfolio:'Demo portfolio',asset:'Asset',price:'Price',change24h:'24h',actions:'Actions',buy:'Buy',sell:'Sell',dashboardDisclaimer:'All balances and activities are fictional sample data and have no real monetary value.',
+        tradeEyebrow:'EXPLORE CRYPTOCURRENCIES',tradeTitle:'Trade',tradeIntro:'A simple overview of a possible exchange – presented entirely as a demo.',exchangePreview:'Exchange preview',demo:'DEMO',selectCoin:'Select cryptocurrency',amount:'Amount',estimatedAmount:'Estimated amount',currentRate:'Current rate',tradeDisclaimer:'Indicative calculation preview only. No orders are executed.',selectedCoin:'Selected coin',marketPrice:'Market price',tradeSideNote:'Displayed rates are for illustration only and may be delayed or unavailable.',
+        aboutEyebrow:'ABOUT MONEY BACK',aboutTitle:'Making digital investing easier to understand.',aboutText:'Money Back is a platform for simple cryptocurrency trading. We value security and transparency.',supportedEyebrow:'OUR MARKET UNIVERSE',supportedTitle:'Supported cryptocurrencies',supportedCount:'20 assets in the demo selection',aboutCtaTitle:'See it for yourself',aboutCtaText:'Explore the demo interface and market overview.',exploreMarkets:'Explore markets',
+        contactEyebrow:'WE ARE HERE TO HELP',contactTitle:'Contact',contactIntro:'Have a question? Write to us using the demo form.',message:'Message',messagePlaceholder:'How can we help you?',send:'Send',contactDetails:'Contact details',contactDetailsText:'The following details are placeholders and must be replaced before publication.',phone:'Phone',address:'Address',
+        legalEyebrow:'LEGAL INFORMATION',privacyTitle:'Privacy policy',privacyTemplateNote:'Important: This text is a non-binding template for a demo project. It must be adapted to the actual data processing and legally reviewed before publication.',privacy1Title:'1. Controller',privacy1Text:'The controller responsible for processing personal data under the General Data Protection Regulation (GDPR) is: [Company name], [Address], [Email]. Please add the full contact details of the actual controller here.',privacy2Title:'2. Data collection and processing',privacy2Text:'When registering and using a test account, the service processes your name, email address, a password hash only, session and verification data, virtual balances and support messages. Technical access data may also include IP address, date and time, browser type, operating system and pages visited. Passwords are not stored in plain text. Support-chat messages may be sent to the DeepSeek AI service to generate a reply. Specify the actual purposes, hosting regions and storage locations used by your deployment.',privacy2Purpose:'Processing may serve to provide the website, ensure technical security, analyse errors and respond to enquiries. Data should only be collected to the extent necessary for the relevant purpose.',privacy3Title:'3. Legal bases',privacy3Text:'Where personal data is processed, the legal basis may include, depending on the specific purpose, Article 6(1)(a) GDPR (consent), Article 6(1)(b) GDPR (contract or pre-contractual measures), Article 6(1)(c) GDPR (legal obligation) or Article 6(1)(f) GDPR (legitimate interests). The applicable basis must be reviewed and specified by the operator.',privacy4Title:'4. Disclosure to third parties',privacy4Text:'To operate the test service, personal data may be shared with technical processors, including the hosting provider [Provider], PostgreSQL database provider [Supabase/Neon], Resend for verification emails and DeepSeek for support-chat replies. A connection to the market-data provider is also made when public market prices are requested. List the providers actually used, their locations, processing purposes, contractual arrangements and any required safeguards for international transfers. This application does not share data to execute real payments or crypto transactions.',privacy5Title:'5. Data retention',privacy5Text:'Personal data is stored only for as long as necessary for the relevant purpose or as required by statutory retention obligations. Once the purpose ceases or a mandatory retention period expires, data is deleted or its processing restricted in accordance with legal requirements. The operator must enter specific periods.',privacy6Title:'6. Your rights',privacy6Intro:'Subject to the statutory requirements, you have in particular the following rights:',privacyRight1:'Access to the personal data being processed (Article 15 GDPR).',privacyRight2:'Rectification of inaccurate data or completion of incomplete data (Article 16 GDPR).',privacyRight3:'Erasure of personal data (Article 17 GDPR).',privacyRight4:'Restriction of processing (Article 18 GDPR).',privacyRight5:'Withdrawal of consent with effect for the future (Article 7(3) GDPR).',privacy6More:'You may also lodge a complaint with a competent data protection supervisory authority. Whether and to what extent a right applies depends on the statutory requirements of the individual case.',privacy7Title:'7. Data protection contact',privacy7Text:'For questions about the processing of personal data or to exercise your rights, please contact: [Email address].',privacyClosing:'For data protection questions, please contact: [Email address]',
+        imprintTitle:'Legal notice',imprintTemplateNote:'Legal notice template: Replace all placeholders and have the details legally reviewed before publication. This demo project does not constitute legal advice.',imprint1Title:'Information pursuant to § 5 DDG',imprintRepresentative:'Represented by:',imprint2Title:'Contact',imprint3Title:'Register and VAT',imprintVat:'VAT identification number pursuant to § 27a German VAT Act:',imprintRegister:'Commercial register:',imprint4Title:'Disclaimer',imprint4Text:'The contents of this website have been prepared with care. To the extent permitted by law, no guarantee is given as to accuracy, completeness or timeliness. Use of the content is at your own risk. External links lead to third-party content over which we have no control.',imprint5Title:'Copyright',imprint5Text:'Content and works created on this website are subject to applicable copyright law. Any use beyond statutory exceptions requires the prior consent of the respective rights holders.',
+        footerText:'A clear crypto prototype for learning and portfolio purposes.',ssl:'SSL encrypted',allRights:'All rights reserved.',footerDemo:'Demo project – not financial or investment advice.',demoModalTitle:'Demo mode',demoModalText:'This feature is not available in the preview.',close:'Close',statusCompleted:'Completed',typeBuy:'Buy',typeSell:'Sell',
+        historyRows:[['08 Nov 2026','Buy','BTC','€1,250.00','0.0142 BTC'],['04 Nov 2026','Sell','ETH','€420.00','0.1420 ETH'],['29 Oct 2026','Buy','SOL','€300.00','1.8750 SOL'],['22 Oct 2026','Buy','XRP','€180.00','240.000 XRP'],['16 Oct 2026','Sell','ADA','€95.00','145.000 ADA'],['09 Oct 2026','Buy','LINK','€250.00','12.500 LINK']]
+      },
+      es: {
+        languageLabel:'Seleccionar idioma',homeAriaLabel:'Money Back – Inicio',mobileMenuLabel:'Abrir navegación',home:'Inicio',dashboard:'Panel',trade:'Operar',about:'Quiénes somos',contact:'Contacto',privacy:'Privacidad',imprint:'Aviso legal',login:'Iniciar sesión',register:'Registrarse',
+        heroBadge:'Sencillo. Claro. Digital.',heroTitle:'Tu dinero. Siempre a la vista.',heroSubtitle:'Descubre las criptomonedas de forma sencilla. Sigue los mercados con una experiencia clara y transparente, sin herramientas complicadas.',startFree:'Empezar gratis',seePrices:'Ver precios',noRealTransactions:'Sin transacciones reales',demoOnly:'Solo entorno de demostración',livePrices:'Precios en vivo',marketAtAGlance:'El mercado de un vistazo',live:'EN VIVO',priceLoading:'Actualizando precio…',priceUpdated:'Actualizado',priceUnavailable:'Precios no disponibles',
+        whyEyebrow:'LO QUE NOS DIFERENCIA',whyTitle:'Una visión clara de los activos digitales',whyText:'Menos complejidad y más claridad para que puedas centrarte en lo importante.',trustRegulated:'Regulado*',trustRegulatedText:'Un concepto centrado en la información clara y los procesos transparentes.',trustDisclaimer:'*Elemento decorativo de la demo; no declara una regulación o licencia real.',trustCustody:'Custodia segura',trustCustodyText:'La sensación de seguridad empieza con un diseño claro y transparencia.',trustSupport:'Asistencia 24/7',trustSupportText:'Un punto de contacto claro e información útil forman parte de una buena experiencia.',marketEyebrow:'EL MERCADO DE UN VISTAZO',marketTitle:'Resumen del mercado',marketSubtitle:'Sigue una selección de criptomonedas.',allMarkets:'Ver todos los mercados',
+        registerSideTitle:'Empieza fácilmente. Tenlo todo a la vista.',registerSideText:'Crea tu perfil de demostración y explora la interfaz de Money Back.',demoEnvironment:'Cuenta virtual de prueba: sin depósitos, pagos ni transacciones reales de criptomonedas.',joinEyebrow:'TU ACCESO DEMO',createAccount:'Crear cuenta',registerIntro:'Crea una cuenta de prueba. Tus credenciales se guardan para acceder a la demo.',name:'Nombre',email:'Correo electrónico',password:'Contraseña',confirmPassword:'Confirmar contraseña',namePlaceholder:'Tu nombre',passwordPlaceholder:'Al menos 8 caracteres',passwordMismatch:'Las contraseñas no coinciden.',agreeTerms:'Acepto los',terms:'Términos y condiciones',andThe:'y la',privacyPolicy:'Política de privacidad',agreeTo:'.',alreadyAccount:'¿Ya tienes una cuenta?',confirmEmailTitle:'Confirma tu correo electrónico',confirmEmailText:'Te hemos enviado un correo de confirmación. Revisa tu bandeja de entrada.',backToLogin:'Volver al inicio de sesión',
+        welcomeBack:'Te damos la bienvenida',loginTitle:'Iniciar sesión',loginIntro:'Accede a tu área de demostración.',forgotPassword:'¿Has olvidado la contraseña?',loginButton:'Entrar',noAccount:'¿Aún no tienes cuenta?',loginDemoNote:'La verificación por correo está disponible; las cuentas de prueba pueden acceder al panel.',yourPortfolio:'Tu cartera',dashboardIntro:'Un resumen compacto de tus activos de demostración.',totalBalance:'Saldo total',invested:'Invertido',availableBalance:'Saldo disponible',demoBalance:'Valor virtual de la cuenta',assets:'Activos',history:'Historial',demoPortfolio:'Cartera demo',asset:'Activo',price:'Precio',change24h:'24 h',actions:'Acciones',buy:'Comprar',sell:'Vender',dashboardDisclaimer:'Todos los saldos y movimientos son datos ficticios de ejemplo y no tienen valor monetario real.',
+        tradeEyebrow:'DESCUBRE LAS CRIPTOMONEDAS',tradeTitle:'Operar',tradeIntro:'Una vista sencilla de un posible intercambio, presentada íntegramente como demostración.',exchangePreview:'Vista previa del intercambio',demo:'DEMO',selectCoin:'Seleccionar criptomoneda',amount:'Cantidad',estimatedAmount:'Cantidad estimada',currentRate:'Tipo de cambio actual',tradeDisclaimer:'Solo es una vista previa de cálculo no vinculante. No se ejecutan órdenes.',selectedCoin:'Moneda seleccionada',marketPrice:'Precio de mercado',tradeSideNote:'Los precios mostrados son solo ilustrativos y pueden estar retrasados o no estar disponibles.',
+        aboutEyebrow:'SOBRE MONEY BACK',aboutTitle:'La inversión digital, más fácil de entender.',aboutText:'Money Back es una plataforma para operar con criptomonedas de forma sencilla. Valoramos la seguridad y la transparencia.',supportedEyebrow:'NUESTRO UNIVERSO DE MERCADO',supportedTitle:'Criptomonedas compatibles',supportedCount:'20 activos en la selección demo',aboutCtaTitle:'Descúbrelo por ti mismo',aboutCtaText:'Explora la interfaz demo y el resumen del mercado.',exploreMarkets:'Explorar mercados',
+        contactEyebrow:'ESTAMOS AQUÍ PARA AYUDARTE',contactTitle:'Contacto',contactIntro:'¿Tienes alguna pregunta? Escríbenos mediante el formulario de demostración.',message:'Mensaje',messagePlaceholder:'¿Cómo podemos ayudarte?',send:'Enviar',contactDetails:'Datos de contacto',contactDetailsText:'Los siguientes datos son marcadores de posición y deben sustituirse antes de publicar.',phone:'Teléfono',address:'Dirección',
+        legalEyebrow:'INFORMACIÓN LEGAL',privacyTitle:'Política de privacidad',privacyTemplateNote:'Importante: Este texto es un modelo no vinculante para un proyecto demo. Debe adaptarse al tratamiento real de datos y revisarse jurídicamente antes de publicarse.',privacy1Title:'1. Responsable del tratamiento',privacy1Text:'El responsable del tratamiento de datos personales conforme al Reglamento General de Protección de Datos (RGPD) es: [Nombre de la empresa], [Dirección], [Correo electrónico]. Añade aquí los datos de contacto completos del responsable real.',privacy2Title:'2. Recopilación y tratamiento de datos',privacy2Text:'Al registrar y utilizar una cuenta de prueba, el servicio procesa tu nombre, dirección de correo electrónico, únicamente el hash de la contraseña, datos de sesión y verificación, saldos virtuales y mensajes de soporte. Los datos técnicos de acceso también pueden incluir la dirección IP, fecha y hora, tipo de navegador, sistema operativo y páginas visitadas. Las contraseñas no se guardan en texto sin formato. Los mensajes del chat de soporte pueden enviarse al servicio de IA DeepSeek para generar una respuesta. Indica los fines, regiones de alojamiento y ubicaciones de almacenamiento reales de tu despliegue.',privacy2Purpose:'El tratamiento puede servir para proporcionar el sitio web, garantizar la seguridad técnica, analizar errores y responder a consultas. Solo deben recopilarse los datos necesarios para cada finalidad.',privacy3Title:'3. Bases jurídicas',privacy3Text:'Cuando se traten datos personales, las bases jurídicas pueden incluir, según la finalidad concreta, el art. 6.1.a RGPD (consentimiento), art. 6.1.b RGPD (contrato o medidas precontractuales), art. 6.1.c RGPD (obligación legal) o art. 6.1.f RGPD (interés legítimo). El operador debe revisar e indicar la base aplicable.',privacy4Title:'4. Comunicación a terceros',privacy4Text:'Para prestar el servicio de prueba, los datos personales pueden compartirse con proveedores técnicos, en particular el proveedor de alojamiento [Proveedor], el proveedor de la base de datos PostgreSQL [Supabase/Neon], Resend para los correos de confirmación y DeepSeek para las respuestas del chat de soporte. Al consultar precios públicos también se establece una conexión con el proveedor de datos de mercado. Indica los proveedores utilizados, su ubicación, fines del tratamiento, acuerdos y garantías necesarias para transferencias internacionales. Esta aplicación no comparte datos para realizar pagos ni transacciones reales de criptomonedas.',privacy5Title:'5. Periodo de conservación',privacy5Text:'Los datos personales se conservarán solo durante el tiempo necesario para la finalidad correspondiente o mientras existan obligaciones legales de conservación. Cuando desaparezca la finalidad o venza el plazo obligatorio, los datos se eliminarán o se limitará su tratamiento conforme a la ley. El operador debe especificar los plazos concretos.',privacy6Title:'6. Tus derechos',privacy6Intro:'Dentro de los requisitos legales, tienes en particular los siguientes derechos:',privacyRight1:'Acceso a los datos personales tratados (art. 15 RGPD).',privacyRight2:'Rectificación de datos inexactos o completar datos incompletos (art. 16 RGPD).',privacyRight3:'Supresión de los datos personales (art. 17 RGPD).',privacyRight4:'Limitación del tratamiento (art. 18 RGPD).',privacyRight5:'Retirar el consentimiento con efectos futuros (art. 7.3 RGPD).',privacy6More:'También puedes presentar una reclamación ante la autoridad de control de protección de datos competente. La existencia y el alcance de cada derecho dependen de los requisitos legales del caso concreto.',privacy7Title:'7. Contacto sobre protección de datos',privacy7Text:'Para preguntas sobre el tratamiento de datos personales o para ejercer tus derechos, ponte en contacto con: [Dirección de correo electrónico].',privacyClosing:'Para consultas sobre protección de datos, escribe a: [Dirección de correo electrónico]',
+        imprintTitle:'Aviso legal',imprintTemplateNote:'Modelo de aviso legal: sustituye todos los marcadores y solicita una revisión jurídica antes de publicar. Este proyecto demo no constituye asesoramiento legal.',imprint1Title:'Información conforme al § 5 DDG',imprintRepresentative:'Representado por:',imprint2Title:'Contacto',imprint3Title:'Registro e IVA',imprintVat:'Número de identificación del IVA conforme al § 27a de la Ley alemana del IVA:',imprintRegister:'Registro mercantil:',imprint4Title:'Exención de responsabilidad',imprint4Text:'Los contenidos de este sitio web se han elaborado con cuidado. En la medida permitida por la ley, no se garantiza su exactitud, integridad ni actualidad. El uso de los contenidos es responsabilidad del usuario. Los enlaces externos conducen a contenidos de terceros sobre los que no tenemos control.',imprint5Title:'Derechos de autor',imprint5Text:'Los contenidos y obras creados en este sitio web están sujetos a la legislación aplicable sobre derechos de autor. Cualquier uso que exceda las excepciones legales requiere el consentimiento previo de los titulares correspondientes.',
+        footerText:'Un prototipo de criptomonedas claro para aprender y crear un portafolio.',ssl:'Cifrado SSL',allRights:'Todos los derechos reservados.',footerDemo:'Proyecto demo: no constituye asesoramiento financiero ni de inversión.',demoModalTitle:'Modo demo',demoModalText:'Esta función no está disponible en la vista previa.',close:'Cerrar',statusCompleted:'Completado',typeBuy:'Compra',typeSell:'Venta',
+        historyRows:[['08 nov 2026','Compra','BTC','1.250,00 €','0,0142 BTC'],['04 nov 2026','Venta','ETH','420,00 €','0,1420 ETH'],['29 oct 2026','Compra','SOL','300,00 €','1,8750 SOL'],['22 oct 2026','Compra','XRP','180,00 €','240,000 XRP'],['16 oct 2026','Venta','ADA','95,00 €','145,000 ADA'],['09 oct 2026','Compra','LINK','250,00 €','12,500 LINK']]
+      },
+      fr: {
+        languageLabel:'Choisir la langue',homeAriaLabel:'Money Back – Accueil',mobileMenuLabel:'Ouvrir la navigation',home:'Accueil',dashboard:'Tableau de bord',trade:'Échange',about:'À propos',contact:'Contact',privacy:'Confidentialité',imprint:'Mentions légales',login:'Connexion',register:'Inscription',
+        heroBadge:'Simple. Clair. Numérique.',heroTitle:'Votre argent. En toute visibilité.',heroSubtitle:'Découvrez les cryptomonnaies en toute simplicité. Suivez les marchés avec une expérience claire et transparente, sans outils compliqués.',startFree:'Commencer gratuitement',seePrices:'Voir les prix',noRealTransactions:'Aucune transaction réelle',demoOnly:'Environnement de démonstration uniquement',livePrices:'Prix en direct',marketAtAGlance:'Le marché en un coup d’œil',live:'EN DIRECT',priceLoading:'Mise à jour du prix…',priceUpdated:'Mis à jour',priceUnavailable:'Cours indisponibles',
+        whyEyebrow:'CE QUI FAIT LA DIFFÉRENCE',whyTitle:'Une vision claire des actifs numériques',whyText:'Moins de complexité, plus de clarté pour vous concentrer sur l’essentiel.',trustRegulated:'Réglementé*',trustRegulatedText:'Un concept axé sur des informations claires et des processus transparents.',trustDisclaimer:'*Élément décoratif de la démo ; ne constitue pas une déclaration de réglementation ou de licence réelle.',trustCustody:'Conservation sécurisée',trustCustodyText:'Un sentiment de sécurité réfléchi commence par un design clair et la transparence.',trustSupport:'Assistance 24 h/24',trustSupportText:'Un point de contact clair et des informations utiles font partie d’une bonne expérience.',marketEyebrow:'LE MARCHÉ EN UN COUP D’ŒIL',marketTitle:'Aperçu du marché',marketSubtitle:'Suivez une sélection de cryptomonnaies.',allMarkets:'Voir tous les marchés',
+        registerSideTitle:'Commencez simplement. Gardez une vue d’ensemble.',registerSideText:'Créez votre profil de démonstration et découvrez l’interface Money Back.',demoEnvironment:'Compte de test virtuel — sans dépôt, paiement ni transaction crypto réelle.',joinEyebrow:'VOTRE ACCÈS DÉMO',createAccount:'Créer un compte',registerIntro:'Créez un compte de test. Vos identifiants sont enregistrés pour votre accès démo.',name:'Nom',email:'E-mail',password:'Mot de passe',confirmPassword:'Confirmer le mot de passe',namePlaceholder:'Votre nom',passwordPlaceholder:'Au moins 8 caractères',passwordMismatch:'Les mots de passe ne correspondent pas.',agreeTerms:'J’accepte les',terms:'Conditions générales',andThe:'et la',privacyPolicy:'Politique de confidentialité',agreeTo:'.',alreadyAccount:'Vous avez déjà un compte ?',confirmEmailTitle:'Confirmez votre adresse e-mail',confirmEmailText:'Nous vous avons envoyé un e-mail de confirmation. Consultez votre boîte de réception.',backToLogin:'Retour à la connexion',
+        welcomeBack:'Bon retour',loginTitle:'Connexion',loginIntro:'Accédez à votre espace de démonstration.',forgotPassword:'Mot de passe oublié ?',loginButton:'Se connecter',noAccount:'Pas encore de compte ?',loginDemoNote:'La vérification par e-mail est prise en charge ; les comptes de test peuvent accéder au tableau de bord.',yourPortfolio:'Votre portefeuille',dashboardIntro:'Un aperçu compact de vos actifs de démonstration.',totalBalance:'Solde total',invested:'Investi',availableBalance:'Solde disponible',demoBalance:'Valeur virtuelle du compte',assets:'Actifs',history:'Historique',demoPortfolio:'Portefeuille démo',asset:'Actif',price:'Prix',change24h:'24 h',actions:'Actions',buy:'Acheter',sell:'Vendre',dashboardDisclaimer:'Tous les soldes et activités sont des exemples fictifs sans valeur monétaire réelle.',
+        tradeEyebrow:'DÉCOUVRIR LES CRYPTOMONNAIES',tradeTitle:'Échange',tradeIntro:'Un aperçu simple d’un échange possible, présenté entièrement sous forme de démonstration.',exchangePreview:'Aperçu de l’échange',demo:'DÉMO',selectCoin:'Choisir une cryptomonnaie',amount:'Montant',estimatedAmount:'Montant estimé',currentRate:'Cours actuel',tradeDisclaimer:'Aperçu de calcul indicatif uniquement. Aucun ordre n’est exécuté.',selectedCoin:'Actif sélectionné',marketPrice:'Prix du marché',tradeSideNote:'Les cours affichés sont fournis à titre indicatif et peuvent être retardés ou indisponibles.',
+        aboutEyebrow:'À PROPOS DE MONEY BACK',aboutTitle:'L’investissement numérique en toute simplicité.',aboutText:'Money Back est une plateforme dédiée à l’échange simple de cryptomonnaies. Nous accordons de l’importance à la sécurité et à la transparence.',supportedEyebrow:'NOTRE UNIVERS DE MARCHÉ',supportedTitle:'Cryptomonnaies prises en charge',supportedCount:'20 actifs dans la sélection démo',aboutCtaTitle:'Découvrez par vous-même',aboutCtaText:'Explorez l’interface de démonstration et l’aperçu du marché.',exploreMarkets:'Découvrir les marchés',
+        contactEyebrow:'NOUS SOMMES À VOTRE ÉCOUTE',contactTitle:'Contact',contactIntro:'Une question ? Écrivez-nous via le formulaire de démonstration.',message:'Message',messagePlaceholder:'Comment pouvons-nous vous aider ?',send:'Envoyer',contactDetails:'Coordonnées',contactDetailsText:'Les informations suivantes sont des espaces réservés à remplacer avant toute publication.',phone:'Téléphone',address:'Adresse',
+        legalEyebrow:'INFORMATIONS JURIDIQUES',privacyTitle:'Politique de confidentialité',privacyTemplateNote:'Important : ce texte est un modèle non contraignant pour un projet de démonstration. Il doit être adapté aux traitements réels et faire l’objet d’une vérification juridique avant publication.',privacy1Title:'1. Responsable du traitement',privacy1Text:'Le responsable du traitement des données personnelles au sens du règlement général sur la protection des données (RGPD) est : [Nom de la société], [Adresse], [E-mail]. Veuillez ajouter ici les coordonnées complètes du responsable effectif.',privacy2Title:'2. Collecte et traitement des données',privacy2Text:'Lors de l’inscription et de l’utilisation d’un compte de test, le service traite votre nom, votre adresse e-mail, uniquement le hachage du mot de passe, les données de session et de vérification, les soldes virtuels et les messages d’assistance. Les données techniques d’accès peuvent également inclure l’adresse IP, la date et l’heure, le type de navigateur, le système d’exploitation et les pages consultées. Les mots de passe ne sont pas stockés en clair. Les messages du chat d’assistance peuvent être transmis au service d’IA DeepSeek pour générer une réponse. Indiquez les finalités, régions d’hébergement et lieux de stockage réellement utilisés.',privacy2Purpose:'Le traitement peut servir à fournir le site, assurer la sécurité technique, analyser les erreurs et répondre aux demandes. Les données ne doivent être collectées que dans la mesure nécessaire à la finalité concernée.',privacy3Title:'3. Bases juridiques',privacy3Text:'Lorsque des données personnelles sont traitées, les bases juridiques peuvent notamment être, selon la finalité, l’art. 6, § 1, a) RGPD (consentement), l’art. 6, § 1, b) RGPD (contrat ou mesures précontractuelles), l’art. 6, § 1, c) RGPD (obligation légale) ou l’art. 6, § 1, f) RGPD (intérêt légitime). La base applicable doit être vérifiée et précisée par l’exploitant.',privacy4Title:'4. Transmission à des tiers',privacy4Text:'Pour fournir le service de test, des données personnelles peuvent être transmises à des sous-traitants techniques, notamment l’hébergeur [Prestataire], le fournisseur de base PostgreSQL [Supabase/Neon], Resend pour les e-mails de confirmation et DeepSeek pour les réponses du chat d’assistance. Une connexion au fournisseur de données de marché est également établie lors de la consultation des cours publics. Indiquez les prestataires réellement utilisés, leur localisation, les finalités, les contrats et les garanties requises pour les transferts internationaux. Cette application ne transmet aucune donnée pour effectuer de vrais paiements ou transactions crypto.',privacy5Title:'5. Durée de conservation',privacy5Text:'Les données personnelles ne sont conservées que pendant la durée nécessaire à la finalité concernée ou imposée par les obligations légales de conservation. Lorsque la finalité disparaît ou qu’un délai obligatoire expire, les données sont supprimées ou leur traitement limité conformément à la loi. L’exploitant doit préciser les délais concrets.',privacy6Title:'6. Vos droits',privacy6Intro:'Dans les conditions prévues par la loi, vous disposez notamment des droits suivants :',privacyRight1:'Droit d’accès aux données personnelles traitées (art. 15 RGPD).',privacyRight2:'Droit de rectification des données inexactes ou de complément des données incomplètes (art. 16 RGPD).',privacyRight3:'Droit à l’effacement des données personnelles (art. 17 RGPD).',privacyRight4:'Droit à la limitation du traitement (art. 18 RGPD).',privacyRight5:'Droit de retirer votre consentement pour l’avenir (art. 7, § 3 RGPD).',privacy6More:'Vous pouvez également introduire une réclamation auprès d’une autorité de contrôle compétente en matière de protection des données. L’existence et l’étendue de chaque droit dépendent des conditions légales applicables au cas concerné.',privacy7Title:'7. Contact relatif à la protection des données',privacy7Text:'Pour toute question concernant le traitement des données personnelles ou l’exercice de vos droits, veuillez contacter : [Adresse e-mail].',privacyClosing:'Pour toute question relative à la protection des données, veuillez contacter : [Adresse e-mail]',
+        imprintTitle:'Mentions légales',imprintTemplateNote:'Modèle de mentions légales : remplacez tous les champs et faites vérifier les informations sur le plan juridique avant publication. Ce projet de démonstration ne constitue pas un conseil juridique.',imprint1Title:'Informations conformément au § 5 DDG',imprintRepresentative:'Représenté par :',imprint2Title:'Contact',imprint3Title:'Registre et TVA',imprintVat:'Numéro d’identification TVA conformément au § 27a de la loi allemande sur la TVA :',imprintRegister:'Registre du commerce :',imprint4Title:'Clause de non-responsabilité',imprint4Text:'Le contenu de ce site a été élaboré avec soin. Dans la mesure permise par la loi, aucune garantie n’est donnée quant à son exactitude, son exhaustivité ou son actualité. L’utilisation des contenus relève de votre propre responsabilité. Les liens externes renvoient vers des contenus de tiers sur lesquels nous n’avons aucun contrôle.',imprint5Title:'Droits d’auteur',imprint5Text:'Les contenus et œuvres créés sur ce site sont soumis au droit d’auteur applicable. Toute utilisation dépassant les exceptions légales nécessite l’accord préalable des titulaires des droits concernés.',
+        footerText:'Un prototype crypto clair à des fins d’apprentissage et de portfolio.',ssl:'Chiffrement SSL',allRights:'Tous droits réservés.',footerDemo:'Projet de démonstration – ne constitue pas un conseil financier ou en investissement.',demoModalTitle:'Mode démo',demoModalText:'Cette fonctionnalité n’est pas disponible dans l’aperçu.',close:'Fermer',statusCompleted:'Terminé',typeBuy:'Achat',typeSell:'Vente',
+        historyRows:[['08 nov. 2026','Achat','BTC','1 250,00 €','0,0142 BTC'],['04 nov. 2026','Vente','ETH','420,00 €','0,1420 ETH'],['29 oct. 2026','Achat','SOL','300,00 €','1,8750 SOL'],['22 oct. 2026','Achat','XRP','180,00 €','240,000 XRP'],['16 oct. 2026','Vente','ADA','95,00 €','145,000 ADA'],['09 oct. 2026','Achat','LINK','250,00 €','12,500 LINK']]
+      },
+      it: {
+        languageLabel:'Seleziona lingua',homeAriaLabel:'Money Back – Home',mobileMenuLabel:'Apri la navigazione',home:'Home',dashboard:'Dashboard',trade:'Scambio',about:'Chi siamo',contact:'Contatti',privacy:'Privacy',imprint:'Note legali',login:'Accedi',register:'Registrati',
+        heroBadge:'Semplice. Chiaro. Digitale.',heroTitle:'I tuoi soldi. Sempre sotto controllo.',heroSubtitle:'Scopri le criptovalute in modo semplice. Tieni d’occhio i mercati con un’esperienza chiara e trasparente, senza strumenti complicati.',startFree:'Inizia gratis',seePrices:'Visualizza i prezzi',noRealTransactions:'Nessuna transazione reale',demoOnly:'Solo ambiente demo',livePrices:'Prezzi in tempo reale',marketAtAGlance:'Il mercato a colpo d’occhio',live:'LIVE',priceLoading:'Aggiornamento del prezzo…',priceUpdated:'Aggiornato',priceUnavailable:'Prezzi non disponibili',
+        whyEyebrow:'COSA CI DISTINGUE',whyTitle:'Una visione chiara degli asset digitali',whyText:'Meno complessità, più chiarezza per concentrarti su ciò che conta.',trustRegulated:'Regolamentato*',trustRegulatedText:'Un concept incentrato su informazioni chiare e processi trasparenti.',trustDisclaimer:'*Elemento decorativo della demo; non costituisce una dichiarazione di regolamentazione o licenza effettiva.',trustCustody:'Custodia sicura',trustCustodyText:'La sensazione di sicurezza nasce da un design chiaro e dalla trasparenza.',trustSupport:'Supporto 24/7',trustSupportText:'Un punto di contatto chiaro e informazioni utili fanno parte di una buona esperienza.',marketEyebrow:'IL MERCATO IN SINTESI',marketTitle:'Panoramica del mercato',marketSubtitle:'Segui una selezione di criptovalute.',allMarkets:'Visualizza tutti i mercati',
+        registerSideTitle:'Inizia facilmente. Tieni tutto sotto controllo.',registerSideText:'Crea il tuo profilo demo e scopri l’interfaccia di Money Back.',demoEnvironment:'Account virtuale di prova — senza depositi, pagamenti o transazioni crypto reali.',joinEyebrow:'IL TUO ACCESSO DEMO',createAccount:'Crea account',registerIntro:'Crea un account di prova. Le tue credenziali vengono salvate per accedere alla demo.',name:'Nome',email:'E-mail',password:'Password',confirmPassword:'Conferma password',namePlaceholder:'Il tuo nome',passwordPlaceholder:'Almeno 8 caratteri',passwordMismatch:'Le password non corrispondono.',agreeTerms:'Accetto i',terms:'Termini e condizioni',andThe:'e l’',privacyPolicy:'Informativa sulla privacy',agreeTo:'.',alreadyAccount:'Hai già un account?',confirmEmailTitle:'Conferma la tua e-mail',confirmEmailText:'Abbiamo inviato un’e-mail di conferma. Controlla la posta in arrivo.',backToLogin:'Torna all’accesso',
+        welcomeBack:'Bentornato',loginTitle:'Accedi',loginIntro:'Accedi alla tua area demo.',forgotPassword:'Password dimenticata?',loginButton:'Accedi',noAccount:'Non hai ancora un account?',loginDemoNote:'La verifica e-mail è supportata; gli account di test possono comunque accedere alla dashboard.',yourPortfolio:'Il tuo portafoglio',dashboardIntro:'Una panoramica compatta dei tuoi asset demo.',totalBalance:'Saldo totale',invested:'Investito',availableBalance:'Saldo disponibile',demoBalance:'Valore virtuale del conto',assets:'Asset',history:'Cronologia',demoPortfolio:'Portafoglio demo',asset:'Asset',price:'Prezzo',change24h:'24h',actions:'Azioni',buy:'Acquista',sell:'Vendi',dashboardDisclaimer:'Tutti i saldi e le attività sono dati di esempio fittizi e non hanno valore monetario reale.',
+        tradeEyebrow:'SCOPRI LE CRIPTOVALUTE',tradeTitle:'Scambio',tradeIntro:'Una semplice panoramica di un possibile scambio, presentata interamente come demo.',exchangePreview:'Anteprima dello scambio',demo:'DEMO',selectCoin:'Seleziona criptovaluta',amount:'Importo',estimatedAmount:'Importo stimato',currentRate:'Tasso attuale',tradeDisclaimer:'Solo un’anteprima di calcolo indicativa. Non vengono eseguiti ordini.',selectedCoin:'Coin selezionata',marketPrice:'Prezzo di mercato',tradeSideNote:'I tassi visualizzati sono solo illustrativi e potrebbero essere ritardati o non disponibili.',
+        aboutEyebrow:'CHI SIAMO',aboutTitle:'Investire nel digitale, in modo semplice.',aboutText:'Money Back è una piattaforma per il trading semplice di criptovalute. Diamo valore alla sicurezza e alla trasparenza.',supportedEyebrow:'IL NOSTRO UNIVERSO DI MERCATO',supportedTitle:'Criptovalute supportate',supportedCount:'20 asset nella selezione demo',aboutCtaTitle:'Scopri tu stesso',aboutCtaText:'Esplora l’interfaccia demo e la panoramica del mercato.',exploreMarkets:'Esplora i mercati',
+        contactEyebrow:'SIAMO QUI PER AIUTARTI',contactTitle:'Contatti',contactIntro:'Hai una domanda? Scrivici tramite il modulo demo.',message:'Messaggio',messagePlaceholder:'Come possiamo aiutarti?',send:'Invia',contactDetails:'Dati di contatto',contactDetailsText:'I seguenti dati sono segnaposto e devono essere sostituiti prima della pubblicazione.',phone:'Telefono',address:'Indirizzo',
+        legalEyebrow:'INFORMAZIONI LEGALI',privacyTitle:'Informativa sulla privacy',privacyTemplateNote:'Importante: questo testo è un modello non vincolante per un progetto demo. Deve essere adattato ai trattamenti di dati effettivi e verificato legalmente prima della pubblicazione.',privacy1Title:'1. Titolare del trattamento',privacy1Text:'Il titolare del trattamento dei dati personali ai sensi del Regolamento generale sulla protezione dei dati (GDPR) è: [Nome azienda], [Indirizzo], [E-mail]. Inserisci qui i dati di contatto completi del titolare effettivo.',privacy2Title:'2. Raccolta e trattamento dei dati',privacy2Text:'Quando ti registri e utilizzi un account di prova, il servizio tratta nome, indirizzo e-mail, esclusivamente l’hash della password, dati di sessione e verifica, saldi virtuali e messaggi di supporto. I dati tecnici di accesso possono inoltre includere indirizzo IP, data e ora, tipo di browser, sistema operativo e pagine visitate. Le password non vengono memorizzate in chiaro. I messaggi della chat di supporto possono essere trasmessi al servizio IA DeepSeek per generare una risposta. Indica le finalità, le regioni di hosting e i luoghi di conservazione effettivamente utilizzati.',privacy2Purpose:'Il trattamento può servire a fornire il sito web, garantire la sicurezza tecnica, analizzare gli errori e rispondere alle richieste. I dati dovrebbero essere raccolti solo nella misura necessaria per la finalità specifica.',privacy3Title:'3. Basi giuridiche',privacy3Text:'Ove vengano trattati dati personali, a seconda della finalità concreta possono applicarsi in particolare l’art. 6, par. 1, lett. a GDPR (consenso), l’art. 6, par. 1, lett. b GDPR (contratto o misure precontrattuali), l’art. 6, par. 1, lett. c GDPR (obbligo legale) o l’art. 6, par. 1, lett. f GDPR (interesse legittimo). La base applicabile deve essere verificata e indicata dal gestore.',privacy4Title:'4. Comunicazione a terzi',privacy4Text:'Per fornire il servizio di test, i dati personali possono essere comunicati a fornitori tecnici, tra cui il provider di hosting [Fornitore], il provider del database PostgreSQL [Supabase/Neon], Resend per le e-mail di conferma e DeepSeek per le risposte della chat di supporto. Quando vengono richiesti i prezzi pubblici viene inoltre stabilita una connessione con il fornitore dei dati di mercato. Indica i fornitori effettivamente utilizzati, la loro sede, le finalità del trattamento, gli accordi e le garanzie richieste per i trasferimenti internazionali. Questa applicazione non comunica dati per eseguire pagamenti o transazioni crypto reali.',privacy5Title:'5. Periodo di conservazione',privacy5Text:'I dati personali vengono conservati solo per il tempo necessario alla finalità specifica o in presenza di obblighi legali di conservazione. Quando la finalità viene meno o scade il periodo previsto, i dati vengono cancellati o il loro trattamento viene limitato secondo le disposizioni di legge. Il gestore deve indicare i periodi concreti.',privacy6Title:'6. I tuoi diritti',privacy6Intro:'Nel rispetto dei requisiti di legge, hai in particolare i seguenti diritti:',privacyRight1:'Accesso ai dati personali trattati (art. 15 GDPR).',privacyRight2:'Rettifica dei dati inesatti o completamento dei dati incompleti (art. 16 GDPR).',privacyRight3:'Cancellazione dei dati personali (art. 17 GDPR).',privacyRight4:'Limitazione del trattamento (art. 18 GDPR).',privacyRight5:'Revoca del consenso con effetto per il futuro (art. 7, par. 3 GDPR).',privacy6More:'Puoi inoltre presentare un reclamo all’autorità di controllo competente per la protezione dei dati. L’esistenza e la portata di ciascun diritto dipendono dai requisiti di legge del singolo caso.',privacy7Title:'7. Contatto per la protezione dei dati',privacy7Text:'Per domande sul trattamento dei dati personali o per esercitare i tuoi diritti, contatta: [Indirizzo e-mail].',privacyClosing:'Per domande sulla protezione dei dati, contatta: [Indirizzo e-mail]',
+        imprintTitle:'Note legali',imprintTemplateNote:'Modello di note legali: sostituisci tutti i segnaposto e fai verificare legalmente i dati prima della pubblicazione. Questo progetto demo non costituisce consulenza legale.',imprint1Title:'Informazioni ai sensi del § 5 DDG',imprintRepresentative:'Rappresentato da:',imprint2Title:'Contatti',imprint3Title:'Registro e IVA',imprintVat:'Numero di identificazione IVA ai sensi del § 27a della legge tedesca sull’IVA:',imprintRegister:'Registro delle imprese:',imprint4Title:'Esclusione di responsabilità',imprint4Text:'I contenuti di questo sito web sono stati preparati con cura. Nei limiti consentiti dalla legge, non si garantisce l’esattezza, la completezza o l’attualità. L’utilizzo dei contenuti avviene sotto la propria responsabilità. I link esterni rimandano a contenuti di terzi sui quali non abbiamo alcun controllo.',imprint5Title:'Diritto d’autore',imprint5Text:'I contenuti e le opere creati su questo sito web sono soggetti alla normativa applicabile sul diritto d’autore. Qualsiasi utilizzo oltre i limiti previsti dalla legge richiede il previo consenso dei rispettivi titolari dei diritti.',
+        footerText:'Un prototipo crypto chiaro per finalità di apprendimento e portfolio.',ssl:'Crittografia SSL',allRights:'Tutti i diritti riservati.',footerDemo:'Progetto demo – non costituisce consulenza finanziaria o d’investimento.',demoModalTitle:'Modalità demo',demoModalText:'Questa funzione non è disponibile nell’anteprima.',close:'Chiudi',statusCompleted:'Completato',typeBuy:'Acquisto',typeSell:'Vendita',
+        historyRows:[['08 nov 2026','Acquisto','BTC','1.250,00 €','0,0142 BTC'],['04 nov 2026','Vendita','ETH','420,00 €','0,1420 ETH'],['29 ott 2026','Acquisto','SOL','300,00 €','1,8750 SOL'],['22 ott 2026','Acquisto','XRP','180,00 €','240,000 XRP'],['16 ott 2026','Vendita','ADA','95,00 €','145,000 ADA'],['09 ott 2026','Acquisto','LINK','250,00 €','12,500 LINK']]
+      }
+    };
+
+    const coins = [
+      {id:'bitcoin',symbol:'BTC',name:'Bitcoin',color:'#F7931A'},
+      {id:'ethereum',symbol:'ETH',name:'Ethereum',color:'#627EEA'},
+      {id:'solana',symbol:'SOL',name:'Solana',color:'#7258D8'},
+      {id:'ripple',symbol:'XRP',name:'XRP',color:'#263238'},
+      {id:'cardano',symbol:'ADA',name:'Cardano',color:'#3468D1'},
+      {id:'polkadot',symbol:'DOT',name:'Polkadot',color:'#E6007A'},
+      {id:'chainlink',symbol:'LINK',name:'Chainlink',color:'#2A5ADA'},
+      {id:'matic-network',symbol:'MATIC',name:'Polygon',color:'#8247E5',logo:'polygon'},
+      {id:'tether',symbol:'USDT',name:'Tether',color:'#26A17B'},
+      {id:'usd-coin',symbol:'USDC',name:'USD Coin',color:'#2775CA'},
+      {id:'dogecoin',symbol:'DOGE',name:'Dogecoin',color:'#C2A633'},
+      {id:'avalanche-2',symbol:'AVAX',name:'Avalanche',color:'#E84142'},
+      {id:'cosmos',symbol:'ATOM',name:'Cosmos',color:'#2E3148'},
+      {id:'litecoin',symbol:'LTC',name:'Litecoin',color:'#345D9D'},
+      {id:'bitcoin-cash',symbol:'BCH',name:'Bitcoin Cash',color:'#8DC351'},
+      {id:'stellar',symbol:'XLM',name:'Stellar',color:'#111827'},
+      {id:'algorand',symbol:'ALGO',name:'Algorand',color:'#111827'},
+      {id:'uniswap',symbol:'UNI',name:'Uniswap',color:'#FF007A'},
+      {id:'aave',symbol:'AAVE',name:'Aave',color:'#8B5CF6'},
+      {id:'shiba-inu',symbol:'SHIB',name:'Shiba Inu',color:'#F28C28'}
+    ];
+
+    let lang = 'de';
+    let prices = {};
+    let priceFetchSucceeded = false;
+    let priceHasResolved = false;
+    let activePage = 'home';
+    let selectedCurrency = 'eur';
+    let selectedCoinId = 'bitcoin';
+    window.prices = prices;
+
+    const $ = (selector, root=document) => root.querySelector(selector);
+    const $$ = (selector, root=document) => Array.from(root.querySelectorAll(selector));
+    const t = (key) => (translations[lang] && translations[lang][key]) || translations.de[key] || key;
+    const numberLocales = {de:'de-DE',en:'en-IE',es:'es-ES',fr:'fr-FR',it:'it-IT'};
+
+    function setLang(nextLang) {
+      if (!translations[nextLang]) return;
+      lang = nextLang;
+      document.documentElement.lang = lang;
+      $('#languageSelect').value = lang;
+      $$('[data-i18n]').forEach(el => {
+        const key = el.getAttribute('data-i18n');
+        if (translations[lang][key] !== undefined) el.textContent = translations[lang][key];
+      });
+      $$('[data-i18n-placeholder]').forEach(el => {
+        const key = el.getAttribute('data-i18n-placeholder');
+        if (translations[lang][key] !== undefined) el.placeholder = translations[lang][key];
+      });
+      $$('[data-i18n-aria]').forEach(el => {
+        const key = el.getAttribute('data-i18n-aria');
+        if (translations[lang][key] !== undefined) el.setAttribute('aria-label', translations[lang][key]);
+      });
+      $$('[data-nav-key]').forEach(el => el.textContent = t(el.getAttribute('data-nav-key')));
+      $$('[data-demo-eur]').forEach(el => { el.textContent = formatMoney(Number(el.dataset.demoEur), 'eur'); });
+      document.title = 'Money Back — ' + ({de:'Krypto-Demo-Prototyp',en:'Crypto demo prototype',es:'Prototipo demo de criptomonedas',fr:'Prototype démo crypto',it:'Prototipo demo crypto'}[lang]);
+      renderHistory();
+      renderPrices();
+      renderTradeOptions();
+      renderSelectedCoin();
+    }
+    window.setLang = setLang;
+
+    function navigate(page, updateHistory=true) {
+      const valid = ['home','register','login','dashboard','trade','about','contact','privacy','imprint'];
+      if (!valid.includes(page)) page = 'home';
+      activePage = page;
+      $$('.page-section').forEach(section => section.classList.add('hidden-page'));
+      const target = $('#page-' + page);
+      if (target) { target.classList.remove('hidden-page'); target.classList.remove('page-enter'); void target.offsetWidth; target.classList.add('page-enter'); }
+      $$('[data-nav-key]').forEach(el => el.classList.toggle('active', el.getAttribute('data-nav-key') === page));
+      $('#mobileNav').classList.remove('mobile-nav-open');
+      $('#mobileMenuButton').setAttribute('aria-expanded','false');
+      if (updateHistory) history.pushState({page}, '', '#' + page);
+      window.scrollTo({top:0, behavior:'smooth'});
+      if (page === 'dashboard') { renderDashboardAssets(); renderHistory(); }
+      if (page === 'trade') { renderSelectedCoin(); }
+    }
+    window.navigate = navigate;
+
+    function showDemo() {
+      const modal = $('#demoModal');
+      modal.classList.add('modal-visible');
+      document.body.style.overflow = 'hidden';
+      $('#closeDemoModal').focus();
+    }
+    function closeDemo() {
+      $('#demoModal').classList.remove('modal-visible');
+      document.body.style.overflow = '';
+    }
+    window.showDemo = showDemo;
+
+    function coinById(id) { return coins.find(coin => coin.id === id) || coins[0]; }
+    function coinIcon(coin, small=false) { return `<span class="coin-symbol ${small ? 'small' : ''}" style="background:${coin.color}">${coin.symbol}</span>`; }
+    function formatMoney(value, currency='eur') {
+      if (typeof value !== 'number' || !Number.isFinite(value)) return '—';
+      const digits = value < 1 ? 5 : 2;
+      return new Intl.NumberFormat(numberLocales[lang] || 'de-DE', {style:'currency', currency:currency.toUpperCase(), minimumFractionDigits:digits === 5 ? 4 : 2, maximumFractionDigits:digits}).format(value);
+    }
+    function formatNumber(value, digits=8) {
+      if (typeof value !== 'number' || !Number.isFinite(value)) return '—';
+      return new Intl.NumberFormat(numberLocales[lang] || 'de-DE', {maximumFractionDigits:digits, minimumFractionDigits:0}).format(value);
+    }
+    function formatChange(value) {
+      if (typeof value !== 'number' || !Number.isFinite(value)) return '—';
+      const sign = value > 0 ? '+' : '';
+      return sign + new Intl.NumberFormat(numberLocales[lang] || 'de-DE', {minimumFractionDigits:2, maximumFractionDigits:2}).format(value) + '%';
+    }
+    function priceFor(id, currency='eur') {
+      const row = prices[id];
+      const value = row && row[currency];
+      return typeof value === 'number' && Number.isFinite(value) ? value : null;
+    }
+    function changeFor(id, currency='eur') {
+      const row = prices[id];
+      const value = row && row[currency + '_24h_change'];
+      return typeof value === 'number' && Number.isFinite(value) ? value : null;
+    }
+    function updateStatus(id) {
+      const el = $('#' + id);
+      if (!el) return;
+      el.textContent = !priceHasResolved ? '—' : (priceFetchSucceeded ? t('priceUpdated') : t('priceUnavailable'));
+      const wrap = el.parentElement;
+      const loadingLabel = wrap && wrap.querySelector('.price-loading-label');
+      if (loadingLabel) loadingLabel.classList.toggle('hidden', priceHasResolved);
+    }
+    function renderMiniPrice(coin) {
+      const value = priceFor(coin.id,'eur');
+      const change = changeFor(coin.id,'eur');
+      const changeClass = change === null ? 'text-muted' : (change >= 0 ? 'text-positive' : 'text-negative');
+      return `<div class="flex items-center justify-between gap-3 py-3.5"><div class="flex min-w-0 items-center gap-3">${coinIcon(coin,true)}<div class="min-w-0"><p class="truncate text-sm font-bold">${coin.name}</p><p class="mt-0.5 text-[11px] font-semibold text-muted">${coin.symbol}</p></div></div><div class="text-right"><p class="ticker text-sm font-bold">${value === null ? '—' : formatMoney(value,'eur')}</p><p class="ticker mt-0.5 text-[11px] font-bold ${changeClass}">${formatChange(change)}</p></div></div>`;
+    }
+    function renderHomePrices() {
+      const featured = coins.slice(0,4);
+      $('#heroPrices').innerHTML = featured.map(renderMiniPrice).join('');
+      $('#homeMarketGrid').innerHTML = featured.map(coin => {
+        const value = priceFor(coin.id,'eur');
+        const change = changeFor(coin.id,'eur');
+        const changeClass = change === null ? 'text-muted' : (change >= 0 ? 'text-positive' : 'text-negative');
+        return `<article class="rounded-2xl border border-slate-100 bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:shadow-soft"><div class="flex items-center gap-3">${coinIcon(coin,true)}<div><p class="text-sm font-bold">${coin.name}</p><p class="mt-0.5 text-[11px] font-semibold text-muted">${coin.symbol}</p></div></div><div class="mt-5 flex items-end justify-between gap-2"><p class="ticker text-lg font-extrabold">${value === null ? '—' : formatMoney(value,'eur')}</p><span class="ticker rounded-lg px-2 py-1 text-xs font-bold ${changeClass} ${change === null ? '' : change >= 0 ? 'bg-green-50' : 'bg-red-50'}">${formatChange(change)}</span></div></article>`;
+      }).join('');
+    }
+    function renderDashboardAssets() {
+      const body = $('#dashboardAssetsBody');
+      if (!body) return;
+      body.innerHTML = coins.slice(0,10).map(coin => {
+        const value = priceFor(coin.id,'eur');
+        const change = changeFor(coin.id,'eur');
+        const changeClass = change === null ? 'text-muted' : (change >= 0 ? 'text-positive' : 'text-negative');
+        return `<tr class="border-b border-slate-50 last:border-0"><td class="px-3 py-4"><div class="flex items-center gap-3">${coinIcon(coin,true)}<div><p class="text-sm font-bold">${coin.name}</p><p class="mt-0.5 text-[11px] font-semibold text-muted">${coin.symbol}</p></div></div></td><td class="ticker px-3 py-4 text-sm font-semibold">${value === null ? '—' : formatMoney(value,'eur')}</td><td class="ticker px-3 py-4 text-sm font-bold ${changeClass}">${formatChange(change)}</td><td class="px-3 py-4"><div class="flex justify-end gap-2"><button class="rounded-lg bg-green-50 px-3 py-2 text-xs font-bold text-positive transition hover:bg-green-100" data-demo>${t('buy')}</button><button class="rounded-lg bg-red-50 px-3 py-2 text-xs font-bold text-negative transition hover:bg-red-100" data-demo>${t('sell')}</button></div></td></tr>`;
+      }).join('');
+    }
+    function renderHistory() {
+      const list = $('#historyList');
+      if (!list) return;
+      const rows = translations[lang].historyRows || translations.de.historyRows;
+      list.innerHTML = rows.map(row => {
+        const isBuy = row[1] === 'Kauf' || row[1] === 'Buy' || row[1] === 'Compra' || row[1] === 'Achat' || row[1] === 'Acquisto';
+        const label = isBuy ? t('typeBuy') : t('typeSell');
+        return `<div class="flex flex-wrap items-center justify-between gap-3 py-4 first:pt-1 last:pb-1"><div class="flex min-w-0 items-center gap-3"><span class="flex h-10 w-10 items-center justify-center rounded-xl ${isBuy ? 'bg-green-50 text-positive' : 'bg-red-50 text-negative'}"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="${isBuy ? 'M12 19V5m-6 6 6-6 6 6' : 'M12 5v14m-6-6 6 6 6-6'}"/></svg></span><div><p class="text-sm font-bold">${label} · ${row[2]}</p><p class="mt-1 text-xs text-muted">${row[0]} · ${row[4]}</p></div></div><div class="text-right"><p class="ticker text-sm font-bold">${row[3]}</p><span class="mt-1 inline-flex rounded-full bg-green-50 px-2 py-1 text-[10px] font-bold text-positive">${t('statusCompleted')}</span></div></div>`;
+      }).join('');
+    }
+    function renderTradeOptions() {
+      const select = $('#coinSelect');
+      if (!select) return;
+      const current = selectedCoinId;
+      select.innerHTML = coins.map(coin => `<option value="${coin.id}">${coin.name} (${coin.symbol})</option>`).join('');
+      select.value = current;
+    }
+    function renderSelectedCoin() {
+      const coin = coinById(selectedCoinId);
+      const currency = selectedCurrency;
+      const value = priceFor(coin.id,currency);
+      const change = changeFor(coin.id,currency);
+      $('#selectedCoinIcon').textContent = coin.symbol;
+      $('#selectedCoinIcon').style.background = coin.color;
+      $('#selectedCoinName').textContent = coin.name;
+      $('#selectedCoinSymbol').textContent = coin.symbol;
+      $('#selectedCoinPrice').textContent = value === null ? '—' : formatMoney(value,currency);
+      $('#selectedCoinChange').textContent = formatChange(change) + ' ' + (currency === 'eur' ? '24h' : '24h');
+      $('#selectedCoinChange').className = 'mt-1 text-xs font-bold ' + (change === null ? 'text-muted' : change >= 0 ? 'text-positive' : 'text-negative');
+      $('#currentRate').textContent = value === null ? '—' : formatMoney(value,currency) + ' / ' + coin.symbol;
+      $('#estimatedCoinName').textContent = coin.name + ' (' + coin.symbol + ')';
+      const amount = Number($('#tradeAmount').value);
+      $('#estimatedCrypto').textContent = value !== null && value > 0 && Number.isFinite(amount) && amount >= 0 ? formatNumber(amount / value, 8) + ' ' + coin.symbol : '—';
+      $('#tradeCurrencySuffix').textContent = currency.toUpperCase();
+      updateStatus('tradePriceStatus');
+    }
+    function renderPrices() {
+      renderHomePrices();
+      renderDashboardAssets();
+      renderSelectedCoin();
+      updateStatus('heroPriceStatus');
+      updateStatus('marketPriceStatus');
+      updateStatus('dashboardPriceStatus');
+      updateStatus('tradePriceStatus');
+    }
+    window.renderPrices = renderPrices;
+
+    async function fetchPrices() {
+      const ids = coins.map(coin => coin.id).join(',');
+      const url = 'https://api.coingecko.com/api/v3/simple/price?ids=' + encodeURIComponent(ids) + '&vs_currencies=eur,usd&include_24hr_change=true';
+      try {
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), 4500);
+        const response = await fetch(url, {method:'GET', headers:{'Accept':'application/json'}, signal:controller.signal, cache:'no-store'});
+        clearTimeout(timeout);
+        if (!response.ok) throw new Error('Price request failed: ' + response.status);
+        const data = await response.json();
+        const nextPrices = {};
+        coins.forEach(coin => {
+          const row = data[coin.id];
+          if (!row) return;
+          nextPrices[coin.id] = {
+            eur: typeof row.eur === 'number' ? row.eur : null,
+            usd: typeof row.usd === 'number' ? row.usd : null,
+            eur_24h_change: typeof row.eur_24h_change === 'number' ? row.eur_24h_change : null,
+            usd_24h_change: typeof row.usd_24h_change === 'number' ? row.usd_24h_change : null
+          };
+        });
+        prices = nextPrices;
+        window.prices = prices;
+        priceFetchSucceeded = Object.keys(prices).length > 0;
+      } catch (error) {
+        prices = {};
+        window.prices = prices;
+        priceFetchSucceeded = false;
+        console.warn('Market prices are currently unavailable.', error);
+      }
+      priceHasResolved = true;
+      renderPrices();
+    }
+
+    function renderSupportedCoins() {
+      $('#supportedCoins').innerHTML = coins.map(coin => `<span class="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-2 text-xs font-bold text-ink">${coinIcon(coin,true)}<span>${coin.symbol}</span><span class="font-medium text-muted">${coin.name}</span></span>`).join('');
+    }
+
+    document.addEventListener('click', event => {
+      const navButton = event.target.closest('[data-nav]');
+      if (navButton) { event.preventDefault(); navigate(navButton.getAttribute('data-nav')); return; }
+      const demoButton = event.target.closest('[data-demo]');
+      if (demoButton) { event.preventDefault(); showDemo(); return; }
+    });
+
+    $('#languageSelect').addEventListener('change', event => setLang(event.target.value));
+    $('#mobileMenuButton').addEventListener('click', () => {
+      const nav = $('#mobileNav');
+      const open = nav.classList.toggle('mobile-nav-open');
+      $('#mobileMenuButton').setAttribute('aria-expanded', String(open));
+    });
+    $('#closeDemoModal').addEventListener('click', closeDemo);
+    $('#demoModal').addEventListener('click', event => { if (event.target === $('#demoModal')) closeDemo(); });
+    document.addEventListener('keydown', event => { if (event.key === 'Escape' && $('#demoModal').classList.contains('modal-visible')) closeDemo(); });
+    window.addEventListener('popstate', event => {
+      const hashPage = (location.hash || '#home').slice(1);
+      navigate(event.state && event.state.page ? event.state.page : hashPage, false);
+    });
+
+    // Register and login handlers are attached below and use the Express API.
+    $('#contactForm').addEventListener('submit', async event => {
+      event.preventDefault();
+      const input = $('#contactMessage');
+      const button = $('#contactForm').querySelector('button[type="submit"]');
+      const message = input.value.trim();
+      if (!message) return;
+      const contactName = $('#contactName').value.trim();
+      const contactEmail = $('#contactEmail').value.trim();
+      const fullMessage = `Name: ${contactName}\nE-Mail: ${contactEmail}\n\n${message}`;
+      button.disabled = true;
+      try {
+        const result = await api('/api/support/message', {method:'POST', body:JSON.stringify({message:fullMessage})});
+        input.value = '';
+        openSupport();
+        await refreshSupportMessages();
+        showToast(result.reply?.message || supportLang().empty);
+      } catch (error) {
+        if (error.status === 401) {
+          showToast(supportLang().login, true);
+          navigate('login');
+        } else if (error.message === 'SUPPORT_RATE_LIMIT') {
+          showToast(({de:'Limit erreicht: maximal 20 Nachrichten pro Stunde.',en:'Limit reached: maximum 20 messages per hour.',es:'Límite alcanzado: máximo 20 mensajes por hora.',fr:'Limite atteinte : 20 messages maximum par heure.',it:'Limite raggiunto: massimo 20 messaggi all’ora.'})[lang], true);
+        } else {
+          showToast(supportLang().failed, true);
+        }
+      } finally { button.disabled = false; }
+    });
+
+    $('#assetsTab').addEventListener('click', () => {
+      $('#assetsPanel').classList.remove('hidden'); $('#historyPanel').classList.add('hidden');
+      $('#assetsTab').classList.add('tab-active'); $('#assetsTab').classList.remove('text-muted');
+      $('#historyTab').classList.remove('tab-active'); $('#historyTab').classList.add('text-muted');
+    });
+    $('#historyTab').addEventListener('click', () => {
+      $('#historyPanel').classList.remove('hidden'); $('#assetsPanel').classList.add('hidden');
+      $('#historyTab').classList.add('tab-active'); $('#historyTab').classList.remove('text-muted');
+      $('#assetsTab').classList.remove('tab-active'); $('#assetsTab').classList.add('text-muted');
+      renderHistory();
+    });
+
+    $('#coinSelect').addEventListener('change', event => { selectedCoinId = event.target.value; renderSelectedCoin(); });
+    $('#tradeAmount').addEventListener('input', renderSelectedCoin);
+    function setCurrency(currency) {
+      selectedCurrency = currency;
+      $('#eurButton').classList.toggle('currency-active', currency === 'eur');
+      $('#usdButton').classList.toggle('currency-active', currency === 'usd');
+      $('#eurButton').classList.toggle('text-muted', currency !== 'eur');
+      $('#usdButton').classList.toggle('text-muted', currency !== 'usd');
+      renderSelectedCoin();
+    }
+    $('#eurButton').addEventListener('click', () => setCurrency('eur'));
+    $('#usdButton').addEventListener('click', () => setCurrency('usd'));
+
+
+    // ───────────────── API integration (same-origin Express backend) ─────────────────
+    const supportUi = {
+      de: {title:'Money Back Support',subtitle:'Wir helfen Ihnen gerne',welcome:'Hallo! Wie können wir Ihnen helfen?',placeholder:'Ihre Nachricht…',send:'Senden',launcher:'Support',you:'Sie',bot:'Bot',staff:'Support',login:'Bitte melden Sie sich an, um den Support-Chat zu nutzen.',failed:'Nachricht konnte nicht gesendet werden. Bitte versuchen Sie es erneut.',loading:'Wird gesendet…',logout:'Abmelden',empty:'Noch keine Nachrichten. Schreiben Sie uns gerne.',tradeNote:'Demo — keine echte Transaktion',verified:'E-Mail bestätigt. Sie können sich jetzt anmelden.',verifyInvalid:'Der Bestätigungslink ist ungültig oder abgelaufen.',genericError:'Etwas ist schiefgelaufen. Bitte versuchen Sie es erneut.',emailSent:'Wir haben Ihnen eine Bestätigungs-E-Mail gesendet. Bitte prüfen Sie Ihren Posteingang.',emailFailed:'Konto erstellt, aber die E-Mail konnte nicht versendet werden. Bitte prüfen Sie die Resend-Konfiguration.'},
+      en: {title:'Money Back Support',subtitle:'We are happy to help',welcome:'Hello! How can we help you?',placeholder:'Your message…',send:'Send',launcher:'Support',you:'You',bot:'Bot',staff:'Support',login:'Please sign in to use the support chat.',failed:'Message could not be sent. Please try again.',loading:'Sending…',logout:'Sign out',empty:'No messages yet. Feel free to write to us.',tradeNote:'Demo — no real transaction',verified:'Email confirmed. You can now sign in.',verifyInvalid:'This confirmation link is invalid or expired.',genericError:'Something went wrong. Please try again.',emailSent:'We sent a confirmation email. Please check your inbox.',emailFailed:'Account created, but the email could not be sent. Please check the Resend configuration.'},
+      es: {title:'Soporte Money Back',subtitle:'Estamos aquí para ayudarte',welcome:'¡Hola! ¿Cómo podemos ayudarte?',placeholder:'Tu mensaje…',send:'Enviar',launcher:'Soporte',you:'Tú',bot:'Bot',staff:'Soporte',login:'Inicia sesión para utilizar el chat de soporte.',failed:'No se pudo enviar el mensaje. Inténtalo de nuevo.',loading:'Enviando…',logout:'Cerrar sesión',empty:'Aún no hay mensajes. Escríbenos cuando quieras.',tradeNote:'Demo — no es una transacción real',verified:'Correo confirmado. Ya puedes iniciar sesión.',verifyInvalid:'El enlace de confirmación no es válido o ha caducado.',genericError:'Se ha producido un error. Inténtalo de nuevo.',emailSent:'Hemos enviado un correo de confirmación. Revisa tu bandeja de entrada.',emailFailed:'Cuenta creada, pero no se pudo enviar el correo. Revisa la configuración de Resend.'},
+      fr: {title:'Assistance Money Back',subtitle:'Nous sommes là pour vous aider',welcome:'Bonjour ! Comment pouvons-nous vous aider ?',placeholder:'Votre message…',send:'Envoyer',launcher:'Assistance',you:'Vous',bot:'Bot',staff:'Assistance',login:'Connectez-vous pour utiliser le chat assistance.',failed:'Le message n’a pas pu être envoyé. Réessayez.',loading:'Envoi…',logout:'Déconnexion',empty:'Aucun message pour le moment. Écrivez-nous.',tradeNote:'Démo — aucune transaction réelle',verified:'E-mail confirmé. Vous pouvez vous connecter.',verifyInvalid:'Ce lien de confirmation est invalide ou expiré.',genericError:'Une erreur est survenue. Veuillez réessayer.',emailSent:'Nous avons envoyé un e-mail de confirmation. Consultez votre boîte de réception.',emailFailed:'Compte créé, mais l’e-mail n’a pas pu être envoyé. Vérifiez la configuration Resend.'},
+      it: {title:'Supporto Money Back',subtitle:'Siamo qui per aiutarti',welcome:'Ciao! Come possiamo aiutarti?',placeholder:'Il tuo messaggio…',send:'Invia',launcher:'Supporto',you:'Tu',bot:'Bot',staff:'Supporto',login:'Accedi per utilizzare la chat di supporto.',failed:'Impossibile inviare il messaggio. Riprova.',loading:'Invio…',logout:'Esci',empty:'Non ci sono ancora messaggi. Scrivici pure.',tradeNote:'Demo — nessuna transazione reale',verified:'E-mail confermata. Ora puoi accedere.',verifyInvalid:'Il link di conferma non è valido o è scaduto.',genericError:'Si è verificato un errore. Riprova.',emailSent:'Abbiamo inviato un’e-mail di conferma. Controlla la posta in arrivo.',emailFailed:'Account creato, ma non è stato possibile inviare l’e-mail. Verifica la configurazione Resend.'}
+    };
+    let accountUser = null;
+    let accountBalances = [];
+    let accountTransactions = [];
+    let supportPollTimer = null;
+    let supportSending = false;
+    let lastRegisterEmailSent = null;
+    let supportMessagesCache = [];
+    const api = async (url, options={}) => {
+      const response = await fetch(url, {
+        credentials: 'same-origin',
+        cache: 'no-store',
+        ...options,
+        headers: { ...(options.body ? {'Content-Type':'application/json'} : {}), ...(options.headers || {}) }
+      });
+      const payload = await response.json().catch(() => ({}));
+      if (!response.ok) {
+        const err = new Error(payload.error || payload.message || 'REQUEST_FAILED');
+        err.status = response.status;
+        err.payload = payload;
+        throw err;
+      }
+      return payload;
+    };
+    const safeText = (value) => String(value ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+    function supportLang() { return supportUi[lang] || supportUi.de; }
+    function renderSupportLanguage() {
+      const x = supportLang();
+      $('#supportTitle').textContent = x.title;
+      $('#supportSubtitle').textContent = x.subtitle;
+      $('#supportWelcome').textContent = x.welcome;
+      $('#supportInput').placeholder = x.placeholder;
+      $('#supportSend').textContent = x.send;
+      $('#supportLauncherText').textContent = x.launcher;
+      $('#supportLauncher').setAttribute('aria-label', x.launcher);
+      $('#supportClose').setAttribute('aria-label', lang==='de'?'Chat schließen':lang==='en'?'Close chat':lang==='es'?'Cerrar chat':lang==='fr'?'Fermer le chat':'Chiudi chat');
+      $('#logoutButton').textContent = x.logout;
+      $('#tradeNoRealNote').textContent = x.tradeNote;
+      if (accountUser) $('#dashboardGreeting').textContent = `${t('welcomeBack')}, ${accountUser.name}`;
+      if (lastRegisterEmailSent !== null && !$('#registerSuccess').classList.contains('hidden')) {
+        $('#registerSuccess').querySelector('p[data-i18n="confirmEmailText"]').textContent = lastRegisterEmailSent ? x.emailSent : x.emailFailed;
+      }
+      if (supportMessagesCache.length) renderSupportMessages(supportMessagesCache);
+      const url = new URL(location.href);
+      const status = url.searchParams.get('verify');
+      if (status === 'success' || status === 'invalid') {
+        showToast(status === 'success' ? x.verified : x.verifyInvalid, status === 'invalid');
+        url.searchParams.delete('verify');
+        history.replaceState(history.state, '', url.pathname + url.hash);
+      }
+    }
+    const baseSetLang = setLang;
+    setLang = function(nextLang) { baseSetLang(nextLang); renderSupportLanguage(); };
+    window.setLang = setLang;
+
+    let toastTimer = null;
+    function showToast(message, isError=false) {
+      const el = $('#appToast');
+      el.textContent = message;
+      el.classList.remove('hidden');
+      el.classList.toggle('text-negative', isError);
+      el.classList.toggle('text-ink', !isError);
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => el.classList.add('hidden'), 5200);
+    }
+    function formatBalanceNumber(value, digits=8) {
+      const n = Number(value || 0);
+      if (!Number.isFinite(n)) return '0';
+      return new Intl.NumberFormat(numberLocales[lang] || 'de-DE', {maximumFractionDigits:digits}).format(n);
+    }
+    function balanceFor(asset) {
+      const row = accountBalances.find(item => item.asset === asset);
+      return row ? Number(row.amount) : 0;
+    }
+    function renderDashboardSummary() {
+      const cash = balanceFor('EUR');
+      let crypto = 0;
+      let missingPrice = false;
+      accountBalances.forEach(row => {
+        if (row.asset === 'EUR') return;
+        const coin = coins.find(c => c.symbol === row.asset);
+        if (!coin || Number(row.amount) === 0) return;
+        const p = priceFor(coin.id, 'eur');
+        if (p === null) missingPrice = true;
+        else crypto += Number(row.amount) * p;
+      });
+      const total = cash + crypto;
+      $('#totalBalanceValue').textContent = missingPrice ? '—' : formatMoney(total, 'eur');
+      $('#investedBalanceValue').textContent = missingPrice ? '—' : formatMoney(crypto, 'eur');
+      $('#availableBalanceValue').textContent = formatMoney(cash, 'eur');
+    }
+    // Replace the former hard-coded demo asset table with the user's own virtual holdings.
+    renderDashboardAssets = function() {
+      const body = $('#dashboardAssetsBody');
+      if (!body) return;
+      body.innerHTML = coins.slice(0,10).map(coin => {
+        const value = priceFor(coin.id,'eur');
+        const change = changeFor(coin.id,'eur');
+        const changeClass = change === null ? 'text-muted' : change >= 0 ? 'text-positive' : 'text-negative';
+        const amount = balanceFor(coin.symbol);
+        return `<tr class="border-b border-slate-50 last:border-0"><td class="px-3 py-4"><div class="flex items-center gap-3">${coinIcon(coin,true)}<div><p class="text-sm font-bold">${safeText(coin.name)}</p><p class="mt-0.5 text-[11px] font-semibold text-muted">${coin.symbol} · ${formatBalanceNumber(amount,8)}</p></div></div></td><td class="ticker px-3 py-4 text-sm font-semibold">${value === null ? '—' : formatMoney(value,'eur')}</td><td class="ticker px-3 py-4 text-sm font-bold ${changeClass}">${formatChange(change)}</td><td class="px-3 py-4"><div class="flex justify-end gap-2"><button class="rounded-lg bg-green-50 px-3 py-2 text-xs font-bold text-positive transition hover:bg-green-100" data-demo>${t('buy')}</button><button class="rounded-lg bg-red-50 px-3 py-2 text-xs font-bold text-negative transition hover:bg-red-100" data-demo>${t('sell')}</button></div></td></tr>`;
+      }).join('');
+      renderDashboardSummary();
+    };
+    renderHistory = function() {
+      const list = $('#historyList');
+      if (!list) return;
+      if (!accountTransactions.length) {
+        list.innerHTML = `<p class="py-5 text-sm text-muted">${safeText(({de:'Noch keine Vorgänge vorhanden.',en:'No activity yet.',es:'Todavía no hay actividad.',fr:'Aucune activité pour le moment.',it:'Nessuna attività al momento.'})[lang])}</p>`;
+        return;
+      }
+      list.innerHTML = accountTransactions.map(row => {
+        const isBuy = row.type === 'buy';
+        const date = new Intl.DateTimeFormat(numberLocales[lang] || 'de-DE', {dateStyle:'medium',timeStyle:'short'}).format(new Date(row.created_at));
+        const coin = coins.find(c => c.symbol === row.asset);
+        const coinName = coin ? coin.name : row.asset;
+        return `<div class="flex flex-wrap items-center justify-between gap-3 py-4 first:pt-1 last:pb-1"><div class="flex min-w-0 items-center gap-3"><span class="flex h-10 w-10 items-center justify-center rounded-xl ${isBuy?'bg-green-50 text-positive':'bg-red-50 text-negative'}"><span class="text-lg">${isBuy?'↑':'↓'}</span></span><div><p class="text-sm font-bold">${isBuy?t('typeBuy'):t('typeSell')} · ${safeText(coinName)} (${safeText(row.asset)})</p><p class="mt-1 text-xs text-muted">${safeText(date)} · ${formatBalanceNumber(Number(row.amount),8)} ${safeText(row.asset)}</p></div></div><div class="text-right"><p class="ticker text-sm font-bold">${formatMoney(Number(row.amount)*Number(row.price_eur),'eur')}</p><span class="mt-1 inline-flex rounded-full bg-slate-100 px-2 py-1 text-[10px] font-bold text-muted">${safeText(row.status === 'completed' ? t('statusCompleted') : row.status)}</span></div></div>`;
+      }).join('');
+    };
+    // Dynamic logo images; if a CDN asset fails, the colored ticker fallback remains visible.
+    coinIcon = function(coin, small=false) {
+      const slug = coin.logo || coin.id;
+      return `<span class="coin-symbol coin-logo-frame ${small?'small':''}"><img class="coin-logo-img" src="https://blockchains.tatum.io/assets/img/${encodeURIComponent(slug)}.svg" alt="${safeText(coin.symbol)}" loading="lazy"><span class="coin-logo-fallback" style="background:${coin.color}">${safeText(coin.symbol)}</span></span>`;
+    };
+    document.addEventListener('error', event => {
+      const img = event.target;
+      if (img && img.classList && img.classList.contains('coin-logo-img')) {
+        img.style.display = 'none';
+        const fallback = img.nextElementSibling;
+        if (fallback) fallback.style.display = 'inline-flex';
+      }
+    }, true);
+    const originalRenderSelectedCoin = renderSelectedCoin;
+    renderSelectedCoin = function() {
+      originalRenderSelectedCoin();
+      const coin = coinById(selectedCoinId);
+      const icon = $('#selectedCoinIcon');
+      if (icon) {
+        icon.classList.add('coin-logo-frame');
+        icon.style.background = '#fff';
+        icon.innerHTML = `<img class="coin-logo-img" src="https://blockchains.tatum.io/assets/img/${encodeURIComponent(coin.logo||coin.id)}.svg" alt="${safeText(coin.symbol)}"><span class="coin-logo-fallback" style="background:${coin.color}">${safeText(coin.symbol)}</span>`;
+      }
+      renderDashboardSummary();
+    };
+    const originalRenderPrices = renderPrices;
+    renderPrices = function() { originalRenderPrices(); renderDashboardSummary(); };
+    window.renderPrices = renderPrices;
+
+    async function loadDashboard() {
+      try {
+        const [me, balances, transactions] = await Promise.all([
+          api('/api/me'), api('/api/balances'), api('/api/transactions')
+        ]);
+        accountUser = me.user;
+        accountBalances = balances.balances || [];
+        accountTransactions = transactions.transactions || [];
+        $('#dashboardGreeting').textContent = `${t('welcomeBack')}, ${accountUser.name}`;
+        renderDashboardAssets();
+        renderHistory();
+      } catch (error) {
+        if (error.status === 401) {
+          accountUser = null;
+          navigate('login');
+          showToast(({de:'Bitte melden Sie sich zuerst an.',en:'Please sign in first.',es:'Inicia sesión primero.',fr:'Veuillez vous connecter.',it:'Effettua prima l’accesso.'})[lang], true);
+        } else {
+          showToast(supportLang().genericError, true);
+        }
+      }
+    }
+    const baseNavigate = navigate;
+    navigate = function(page, updateHistory=true) {
+      baseNavigate(page, updateHistory);
+      if (page === 'dashboard') loadDashboard();
+    };
+    window.navigate = navigate;
+
+    // Registration and sign-in now use server-side bcrypt + HttpOnly sessions.
+    $('#registerForm').addEventListener('submit', async event => {
+      event.preventDefault();
+      const password = $('#regPassword').value;
+      const confirmation = $('#regPasswordConfirm').value;
+      const mismatch = $('#registerError');
+      const apiError = $('#registerApiError');
+      apiError.classList.add('hidden');
+      if (password !== confirmation) { mismatch.classList.remove('hidden'); $('#regPasswordConfirm').focus(); return; }
+      mismatch.classList.add('hidden');
+      if (password.length < 8) { apiError.textContent = ({de:'Das Passwort muss mindestens 8 Zeichen lang sein.',en:'Password must contain at least 8 characters.',es:'La contraseña debe tener al menos 8 caracteres.',fr:'Le mot de passe doit contenir au moins 8 caractères.',it:'La password deve contenere almeno 8 caratteri.'})[lang]; apiError.classList.remove('hidden'); return; }
+      const submit = $('#registerForm').querySelector('button[type="submit"]');
+      submit.disabled = true;
+      try {
+        const result = await api('/api/auth/register', {method:'POST', body:JSON.stringify({name:$('#regName').value.trim(),email:$('#regEmail').value.trim(),password})});
+        lastRegisterEmailSent = Boolean(result.emailSent);
+        $('#registerFormWrap').classList.add('hidden');
+        $('#registerSuccess').classList.remove('hidden');
+        $('#registerSuccess').querySelector('p[data-i18n="confirmEmailText"]').textContent = lastRegisterEmailSent ? supportLang().emailSent : supportLang().emailFailed;
+        $('#regPassword').value = '';
+        $('#regPasswordConfirm').value = '';
+      } catch (error) {
+        const texts = {
+          EMAIL_ALREADY_EXISTS:{de:'Diese E-Mail-Adresse ist bereits registriert.',en:'This email address is already registered.',es:'Esta dirección de correo ya está registrada.',fr:'Cette adresse e-mail est déjà enregistrée.',it:'Questo indirizzo e-mail è già registrato.'},
+          INVALID_INPUT:{de:'Bitte prüfen Sie Ihre Eingaben. Das Passwort muss mindestens 8 Zeichen haben.',en:'Please check your details. Password must be at least 8 characters.',es:'Comprueba los datos. La contraseña debe tener al menos 8 caracteres.',fr:'Vérifiez vos informations. Le mot de passe doit contenir au moins 8 caractères.',it:'Controlla i dati. La password deve contenere almeno 8 caratteri.'}
+        };
+        apiError.textContent = texts[error.message]?.[lang] || supportLang().genericError;
+        apiError.classList.remove('hidden');
+      } finally { submit.disabled = false; }
+    });
+    $('#loginForm').addEventListener('submit', async event => {
+      event.preventDefault();
+      const submit = $('#loginForm').querySelector('button[type="submit"]');
+      submit.disabled = true;
+      try {
+        const result = await api('/api/auth/login', {method:'POST',body:JSON.stringify({email:$('#loginEmail').value.trim(),password:$('#loginPassword').value})});
+        accountUser = result.user;
+        $('#loginPassword').value = '';
+        if (result.needsEmailVerification) {
+          showToast(({de:'Bitte bestätigen Sie zuerst Ihre E-Mail. Testmodus: Dashboard-Zugriff ist trotzdem möglich.',en:'Please confirm your email first. Test mode: dashboard access is still enabled.',es:'Confirma primero tu correo. Modo de prueba: el acceso al panel sigue habilitado.',fr:'Veuillez d’abord confirmer votre e-mail. Mode test : l’accès au tableau de bord reste autorisé.',it:'Conferma prima la tua e-mail. Modalità test: l’accesso alla dashboard resta disponibile.'})[lang], true);
+        }
+        navigate('dashboard');
+      } catch (error) {
+        const loginError = error.status === 401
+          ? ({de:'E-Mail oder Passwort ist nicht korrekt.',en:'Email or password is incorrect.',es:'El correo o la contraseña no son correctos.',fr:'Adresse e-mail ou mot de passe incorrect.',it:'E-mail o password non corretti.'})[lang]
+          : supportLang().genericError;
+        showToast(loginError, true);
+      } finally { submit.disabled = false; }
+    });
+
+    $('#logoutButton').addEventListener('click', async () => {
+      try { await api('/api/auth/logout', {method:'POST'}); } catch {}
+      accountUser = null; accountBalances = []; accountTransactions = [];
+      navigate('home');
+      showToast(({de:'Sie wurden abgemeldet.',en:'You have signed out.',es:'Has cerrado sesión.',fr:'Vous êtes déconnecté.',it:'Hai effettuato la disconnessione.'})[lang]);
+    });
+
+    // Floating support conversation. The 5-second poll runs only while its panel is open.
+    function renderSupportMessages(messages) {
+      supportMessagesCache = Array.isArray(messages) ? messages : [];
+      messages = supportMessagesCache;
+      const root = $('#supportMessages');
+      root.replaceChildren();
+      if (!messages.length) {
+        const empty = document.createElement('p'); empty.className='rounded-xl bg-white p-3 text-xs leading-5 text-muted'; empty.textContent=supportLang().empty; root.append(empty); return;
+      }
+      messages.forEach(message => {
+        const isSupport = Boolean(message.from_support);
+        const wrapper = document.createElement('div');
+        wrapper.className = `max-w-[86%] rounded-xl px-3 py-2 ${isSupport?'self-start bg-white':'self-end bg-blue-50'}`;
+        const sender = document.createElement('p'); sender.className='mb-1 text-[10px] font-bold text-muted';
+        sender.textContent = isSupport ? (message.from_bot?supportLang().bot:supportLang().staff) : supportLang().you;
+        const body = document.createElement('p'); body.className='whitespace-pre-wrap break-words text-xs leading-5 text-ink'; body.textContent=message.message;
+        const time = document.createElement('p'); time.className='mt-1 text-right text-[9px] text-muted'; time.textContent=new Intl.DateTimeFormat(numberLocales[lang]||'de-DE',{hour:'2-digit',minute:'2-digit'}).format(new Date(message.created_at));
+        wrapper.append(sender,body,time); root.append(wrapper);
+      });
+      root.scrollTop = root.scrollHeight;
+    }
+    async function refreshSupportMessages() {
+      try {
+        const result = await api('/api/support/messages');
+        renderSupportMessages(result.messages || []);
+        $('#supportStatus').classList.add('hidden');
+      } catch (error) {
+        if (error.status === 401) {
+          $('#supportStatus').textContent = supportLang().login;
+          $('#supportStatus').classList.remove('hidden');
+        } else {
+          $('#supportStatus').textContent = supportLang().genericError;
+          $('#supportStatus').classList.remove('hidden');
+        }
+      }
+    }
+    function openSupport() {
+      $('#supportPanel').classList.remove('hidden');
+      $('#supportInput').focus();
+      refreshSupportMessages();
+      if (supportPollTimer) clearInterval(supportPollTimer);
+      supportPollTimer = setInterval(refreshSupportMessages, 5000);
+    }
+    function closeSupport() {
+      $('#supportPanel').classList.add('hidden');
+      if (supportPollTimer) clearInterval(supportPollTimer);
+      supportPollTimer = null;
+    }
+    $('#supportLauncher').addEventListener('click', () => $('#supportPanel').classList.contains('hidden') ? openSupport() : closeSupport());
+    $('#supportClose').addEventListener('click', closeSupport);
+    $('#supportForm').addEventListener('submit', async event => {
+      event.preventDefault();
+      const message = $('#supportInput').value.trim();
+      if (!message || supportSending) return;
+      supportSending = true; $('#supportSend').disabled = true; $('#supportSend').textContent = supportLang().loading;
+      try {
+        await api('/api/support/message',{method:'POST',body:JSON.stringify({message})});
+        $('#supportInput').value = '';
+        await refreshSupportMessages();
+      } catch (error) {
+        $('#supportStatus').textContent = error.message === 'SUPPORT_RATE_LIMIT'
+          ? ({de:'Limit erreicht: maximal 20 Nachrichten pro Stunde.',en:'Limit reached: maximum 20 messages per hour.',es:'Límite alcanzado: máximo 20 mensajes por hora.',fr:'Limite atteinte : 20 messages maximum par heure.',it:'Limite raggiunto: massimo 20 messaggi all’ora.'})[lang]
+          : error.status === 401 ? supportLang().login : supportLang().failed;
+        $('#supportStatus').classList.remove('hidden');
+      } finally { supportSending=false; $('#supportSend').disabled=false; $('#supportSend').textContent=supportLang().send; }
+    });
+
+    // Handle the verification redirect query without affecting the existing SPA hash routing.
+    renderSupportLanguage();
+
+    // Initialise all views and start public market-price refreshes.
+    $('#currentYear').textContent = String(new Date().getFullYear());
+    renderSupportedCoins();
+    renderTradeOptions();
+    renderHistory();
+    setLang('de');
+    const initialPage = (location.hash || '#home').slice(1);
+    navigate(initialPage, false);
+    fetchPrices();
+    setInterval(fetchPrices, 5000);
+  </script>
+</body>
+</html>
