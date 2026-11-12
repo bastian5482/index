@@ -27,7 +27,7 @@ begin
         reviewed_at = null,
         reviewed_by = null,
         rejection_reason = null
-    where public.kyc_requests.status = 'rejected'
+    where kyc_requests.status = 'rejected'
   returning id, status into v_request_id, v_status;
 
   if v_request_id is null then
